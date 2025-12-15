@@ -19,6 +19,21 @@ const sanitizeInput = (input: string): string => {
   return input.replace(/[\u0000-\u001F\u007F-\u009F]/g, "").trim().substring(0, 300);
 };
 
+// Robust JSON parser to handle potential Markdown wrapping from LLMs
+const parseJSON = <T>(text: string | undefined): T => {
+  if (!text) return [] as unknown as T;
+  try {
+    // Remove markdown code blocks if present (e.g. ```json ... ```)
+    const cleanText = text.replace(/```json\s*([\s\S]*?)\s*```/g, '$1')
+                          .replace(/```\s*([\s\S]*?)\s*```/g, '$1')
+                          .trim();
+    return JSON.parse(cleanText) as T;
+  } catch (e) {
+    console.error("JSON Parse Error:", e, text);
+    throw new Error("The oracle's words were unintelligible. (Data Parsing Error)");
+  }
+};
+
 async function callWithRetry<T>(fn: () => Promise<T>, retries = 3, delay = 1000): Promise<T> {
   try {
     return await fn();
@@ -46,26 +61,35 @@ const bookSchema: Schema = {
     moodColor: { type: Type.STRING, description: "Hex color code matching the book's vibe." },
     excerpt: { type: Type.STRING, description: "A very short, atmospheric teaser sentence." },
     ebookUrl: { type: Type.STRING, description: "A link to the E-Book (Project Gutenberg, OpenLibrary, or Google Books). If not free, provide a Google Books/Amazon link." },
-    moviePairing: { type: Type.STRING, description: "A movie or visual media recommendation that matches the book's specific mood and aesthetic." }
+    moviePairing: { type: Type.STRING, description: "A movie or visual media recommendation that matches the book's specific mood and aesthetic." },
+    language: { type: Type.STRING, description: "The primary language of the book edition (e.g. 'English', 'Spanish')." }
   },
-  required: ["title", "author", "isbn", "reasoning", "moodColor", "genre", "description", "excerpt", "moviePairing"],
+  required: ["title", "author", "isbn", "reasoning", "moodColor", "genre", "description", "excerpt", "moviePairing", "language"],
 };
 
 export const getBookRecommendations = async (prefs: UserPreferences): Promise<Book[]> => {
-  if (!apiKey) throw new Error("Secure API Key configuration missing.");
+  if (!apiKey) throw new Error("API Key configuration is missing.");
   const model = "gemini-2.5-flash";
   const sanitizedInterest = sanitizeInput(prefs.specificInterest || "Surprise me");
   
   const prompt = `
-    Recommend 4 atmospheric books in ${prefs.language || 'English'}.
+    Recommend 4 atmospheric books in ${prefs.language || 'English'} specifically curated for the '${prefs.age}' age group.
+    
     User Context:
-    - Age Group: ${prefs.age} (CRITICAL: Filter content appropriateness based on this).
+    - Age Group: ${prefs.age}
     - Weather: ${prefs.weather}
     - Mood: ${prefs.mood}
     - Pace: ${prefs.pace}
     - Setting: ${prefs.setting}
     - Interest: ${sanitizedInterest}
     
+    AGE GROUP GUIDELINES:
+    - 'child' (Under 12): Recommend Middle Grade or high-quality Children's Literature. Whimsical, safe, imaginative.
+    - 'teen' (13-17): Recommend Young Adult (YA) fiction. Coming of age, identity, high stakes.
+    - 'young_adult' (18-24): Recommend "New Adult" or crossover fiction. Navigating independence, complex relationships.
+    - 'adult' (25-40): Recommend contemporary or genre fiction with complex themes.
+    - 'mature' (40+): Recommend literary fiction, classics, or sophisticated genre fiction with depth.
+
     CRITICAL INSTRUCTIONS:
     1. **Markov Chain Genre Switching**: Do NOT recommend 4 books of the exact same genre. Simulate a Markov chain where the genre shifts slightly between recommendations to keep engagement high (e.g., Fantasy -> Magical Realism -> Historical Fiction).
     2. **Aesthetics**: Infer a dominant "Mood Color" and "Movie Pairing" for each book based on the User Context provided.
@@ -86,15 +110,15 @@ export const getBookRecommendations = async (prefs: UserPreferences): Promise<Bo
         }
       });
     });
-    return JSON.parse(response.text || "[]") as Book[];
-  } catch (error) {
+    return parseJSON<Book[]>(response.text);
+  } catch (error: any) {
     console.error("Backend Error [Recommendations]:", error);
-    throw new Error("Unable to connect to the Curatorial Backend.");
+    throw new Error(error.message || "Unable to divine recommendations at this moment.");
   }
 };
 
 export const searchBooks = async (query: string): Promise<Book[]> => {
-  if (!apiKey) throw new Error("Secure API Key configuration missing.");
+  if (!apiKey) throw new Error("API Key configuration is missing.");
   const model = "gemini-2.5-flash";
   const sanitizedQuery = sanitizeInput(query);
   
@@ -120,10 +144,10 @@ export const searchBooks = async (query: string): Promise<Book[]> => {
         }
       });
     });
-    return JSON.parse(response.text || "[]") as Book[];
-  } catch (error) {
+    return parseJSON<Book[]>(response.text);
+  } catch (error: any) {
     console.error("Backend Error [Search]:", error);
-    throw new Error("Unable to search books.");
+    throw new Error(error.message || "The archives are currently inaccessible.");
   }
 };
 
@@ -147,7 +171,7 @@ export const getTrendingBooks = async (): Promise<Book[]> => {
         }
       });
     });
-    return JSON.parse(response.text || "[]") as Book[];
+    return parseJSON<Book[]>(response.text);
   } catch (error) {
     console.warn("Could not fetch trending", error);
     return [];

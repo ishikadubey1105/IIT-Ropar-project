@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { generateMoodImage } from '../services/gemini';
 
 interface BookCoverProps {
   isbn?: string;
@@ -20,12 +21,14 @@ export const BookCover: React.FC<BookCoverProps> = ({
   const [src, setSrc] = useState<string | null>(null);
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isGenerated, setIsGenerated] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
     setLoading(true);
     setError(false);
     setSrc(null);
+    setIsGenerated(false);
 
     const checkImage = (url: string): Promise<boolean> => {
       return new Promise((resolve) => {
@@ -73,6 +76,18 @@ export const BookCover: React.FC<BookCoverProps> = ({
         }
       }
 
+      // 3. AI Generation Fallback (Gemini)
+      // Generates a unique placeholder if external APIs fail
+      if (!foundUrl) {
+        try {
+           const prompt = `A minimalist, artistic book cover design for the book "${title}" by ${author}. The mood color is ${moodColor}. No text overlays. abstract, atmospheric.`;
+           foundUrl = await generateMoodImage(prompt);
+           if (foundUrl) setIsGenerated(true);
+        } catch (e) {
+           console.warn("AI Cover generation failed", e);
+        }
+      }
+
       if (isMounted) {
         if (foundUrl) {
           setSrc(foundUrl);
@@ -86,9 +101,9 @@ export const BookCover: React.FC<BookCoverProps> = ({
 
     fetchCover();
     return () => { isMounted = false; };
-  }, [isbn, title, author]);
+  }, [isbn, title, author, moodColor]);
 
-  // Fallback / Loading UI
+  // Fallback / Loading UI (Only shows if AI also fails or while loading)
   if (error || (!src && !loading)) {
     return (
       <div 
@@ -128,16 +143,50 @@ export const BookCover: React.FC<BookCoverProps> = ({
   return (
     <div className={`relative bg-slate-800 ${className} overflow-hidden shadow-2xl`}>
       {loading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-slate-800 z-20">
-          <div className="w-8 h-8 border-2 border-accent-gold border-t-transparent rounded-full animate-spin" />
+        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center overflow-hidden bg-slate-900">
+           {/* Ambient Background Glow */}
+           <div 
+             className="absolute inset-0 opacity-20 blur-3xl animate-pulse-slow"
+             style={{ background: `radial-gradient(circle at center, ${moodColor}, transparent)` }}
+           />
+           
+           {/* Abstract Floating Shapes */}
+           <div className="absolute top-[-20%] right-[-20%] w-32 h-32 rounded-full bg-white/5 blur-2xl animate-[pulse_4s_ease-in-out_infinite]" />
+           <div className="absolute bottom-[-20%] left-[-20%] w-32 h-32 rounded-full bg-white/5 blur-2xl animate-[pulse_5s_ease-in-out_infinite]" />
+
+           {/* Central Loading Icon */}
+           <div className="relative z-10 flex flex-col items-center gap-3">
+             <div className="w-10 h-14 border border-white/10 rounded-sm bg-white/5 backdrop-blur-md flex items-center justify-center shadow-2xl relative overflow-hidden group">
+                <div 
+                   className="absolute inset-0 opacity-30 animate-[translate-x_2s_linear_infinite]"
+                   style={{ background: `linear-gradient(90deg, transparent, ${moodColor}, transparent)` }}
+                />
+                <div className="w-[1px] h-10 bg-white/20" />
+             </div>
+             <div className="flex gap-1">
+               <span className="w-1 h-1 rounded-full bg-white/40 animate-[bounce_1s_infinite]" style={{ animationDelay: '0ms' }} />
+               <span className="w-1 h-1 rounded-full bg-white/40 animate-[bounce_1s_infinite]" style={{ animationDelay: '150ms' }} />
+               <span className="w-1 h-1 rounded-full bg-white/40 animate-[bounce_1s_infinite]" style={{ animationDelay: '300ms' }} />
+             </div>
+           </div>
         </div>
       )}
       {src && (
-        <img
-          src={src}
-          alt={title}
-          className={`object-cover w-full h-full transition-all duration-700 ${loading ? 'opacity-0 scale-105' : 'opacity-100 scale-100'}`}
-        />
+        <>
+          <img
+            src={src}
+            alt={title}
+            className={`object-cover w-full h-full transition-all duration-700 ${loading ? 'opacity-0 scale-105' : 'opacity-100 scale-100'}`}
+          />
+          {isGenerated && showText && (
+             <div className="absolute inset-0 flex flex-col justify-end p-4 bg-gradient-to-t from-black/90 via-black/20 to-transparent">
+               <div className="border-t border-white/20 pt-2">
+                 <h3 className="font-serif font-bold text-white text-lg leading-tight drop-shadow-lg line-clamp-3">{title}</h3>
+                 <p className="text-xs text-slate-200 mt-1 uppercase tracking-widest font-medium opacity-90">{author}</p>
+               </div>
+             </div>
+          )}
+        </>
       )}
       {/* Cinematic overlay */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />

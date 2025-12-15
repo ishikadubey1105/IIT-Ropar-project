@@ -16,6 +16,7 @@ export const BookCard: React.FC<BookCardProps> = ({ book, index }) => {
   const [details, setDetails] = useState<{ summary: string, sources: WebSource[] } | null>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [isShared, setIsShared] = useState(false);
   
   const audioContextRef = useRef<AudioContext | null>(null);
   const sourceNodeRef = useRef<AudioBufferSourceNode | null>(null);
@@ -71,26 +72,67 @@ export const BookCard: React.FC<BookCardProps> = ({ book, index }) => {
     setIsSaved(newState);
   };
 
+  const handleShare = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const shareData = {
+      title: book.title,
+      text: `Check out "${book.title}" by ${book.author} on Atmosphera. ${book.description}`,
+      url: book.ebookUrl || window.location.href
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        console.debug("Share cancelled");
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
+        setIsShared(true);
+        setTimeout(() => setIsShared(false), 2000);
+      } catch (err) {
+        console.error("Clipboard failed", err);
+      }
+    }
+  };
+
   return (
     <div 
-      className="group relative w-full bg-slate-800/80 backdrop-blur-md rounded-xl overflow-hidden shadow-2xl transition-all duration-500 hover:-translate-y-2 hover:shadow-accent-gold/20 flex flex-col border border-slate-700/50"
+      className="group relative w-full bg-black/60 backdrop-blur-xl rounded-xl overflow-hidden shadow-2xl transition-all duration-500 hover:-translate-y-2 hover:shadow-accent-gold/20 flex flex-col border border-white/10"
       style={{ animationDelay: `${index * 150}ms` }}
     >
       <div className="absolute top-0 left-0 w-full h-1.5" style={{ backgroundColor: book.moodColor }} />
       
       <div className="p-6 md:p-8 flex flex-col h-full">
         <div className="mb-6 flex justify-between items-start">
-          <span className="text-xs uppercase tracking-widest text-slate-400 border border-slate-700 px-2 py-1 rounded-md mt-1">
+          <span className="text-xs uppercase tracking-widest font-bold text-accent-gold bg-accent-gold/10 border border-accent-gold/20 px-3 py-1 rounded-full backdrop-blur-md mt-1">
             {book.genre}
           </span>
           <div className="flex gap-2">
+            <button
+              onClick={handleShare}
+              className={`flex items-center justify-center w-10 h-10 rounded-full border transition-all duration-300 bg-black/20
+                ${isShared 
+                  ? 'bg-emerald-500/20 border-emerald-500 text-emerald-500' 
+                  : 'border-slate-600 text-slate-400 hover:border-blue-400 hover:text-blue-400'}
+              `}
+              title={isShared ? "Copied!" : "Share"}
+            >
+              {isShared ? (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+              ) : (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
+              )}
+            </button>
+
             {/* E-Book Button */}
             {book.ebookUrl && (
               <a 
                 href={book.ebookUrl} 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="flex items-center justify-center w-10 h-10 rounded-full border border-slate-600 transition-all duration-300 hover:border-accent-gold hover:text-accent-gold text-slate-400"
+                className="flex items-center justify-center w-10 h-10 rounded-full border border-slate-600 transition-all duration-300 hover:border-accent-gold hover:text-accent-gold text-slate-400 bg-black/20"
                 title="Get E-Book"
               >
                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
@@ -99,7 +141,7 @@ export const BookCard: React.FC<BookCardProps> = ({ book, index }) => {
 
             <button
               onClick={handleToggleSave}
-              className={`flex items-center justify-center w-10 h-10 rounded-full border transition-all duration-300
+              className={`flex items-center justify-center w-10 h-10 rounded-full border transition-all duration-300 bg-black/20
                 ${isSaved 
                   ? 'bg-red-500/20 border-red-500 text-red-500' 
                   : 'border-slate-600 text-slate-400 hover:border-red-400 hover:text-red-400'}
@@ -113,7 +155,7 @@ export const BookCard: React.FC<BookCardProps> = ({ book, index }) => {
             <button 
               onClick={handlePlayPreview}
               disabled={isAudioLoading}
-              className={`flex items-center justify-center w-10 h-10 rounded-full border border-slate-600 transition-all duration-300
+              className={`flex items-center justify-center w-10 h-10 rounded-full border border-slate-600 transition-all duration-300 bg-black/20
                 ${isPlaying ? 'bg-accent-gold border-accent-gold text-deep-bg' : 'hover:border-accent-gold hover:text-accent-gold text-slate-400'}
               `}
             >
@@ -143,11 +185,18 @@ export const BookCard: React.FC<BookCardProps> = ({ book, index }) => {
                 <h3 className="text-2xl font-serif font-bold text-white mb-2 group-hover:text-accent-gold transition-colors leading-tight">
                 {book.title}
                 </h3>
-                <p className="text-sm font-medium text-slate-400 italic">by {book.author}</p>
+                <p className="text-sm font-medium text-slate-400 italic flex flex-wrap items-center gap-2">
+                  <span>by {book.author}</span>
+                  {book.language && (
+                     <span className="not-italic text-[10px] uppercase tracking-wider text-slate-500 border border-slate-700 px-2 py-0.5 rounded-full bg-black/20">
+                       {book.language}
+                     </span>
+                  )}
+                </p>
             </div>
         </div>
 
-        <div className="bg-slate-900/50 p-4 rounded-lg mb-6 border-l-2 border-slate-700">
+        <div className="bg-white/5 p-4 rounded-lg mb-6 border-l-2 border-slate-700">
            <p className="text-slate-300 text-sm leading-relaxed">"{book.description}"</p>
         </div>
 
@@ -158,14 +207,14 @@ export const BookCard: React.FC<BookCardProps> = ({ book, index }) => {
 
         <div className="mt-auto space-y-4">
           {/* Grounding / Real-time Info */}
-          <div className="border-t border-slate-700/50 pt-4">
+          <div className="border-t border-white/10 pt-4">
             {!details ? (
               <button onClick={loadRealTimeInfo} className="text-xs text-accent-gold hover:underline flex items-center gap-1">
                  {loadingDetails ? 'Searching Google...' : 'Fetch Live Insights & Reviews'}
                  {!loadingDetails && <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>}
               </button>
             ) : (
-              <div className="text-xs text-slate-400 bg-slate-900/30 p-3 rounded animate-fade-in">
+              <div className="text-xs text-slate-400 bg-black/40 p-3 rounded animate-fade-in">
                 <p className="mb-2 italic">{details.summary}</p>
                 <div className="flex flex-wrap gap-2">
                   {details.sources.map((s, i) => (

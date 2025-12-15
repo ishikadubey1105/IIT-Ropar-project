@@ -22,24 +22,15 @@ export const Hero: React.FC<HeroProps> = ({ onStart, onBrowse }) => {
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden flex items-center justify-center px-6 md:px-12">
-      {/* Dynamic Background Image */}
-      <div className="absolute inset-0 z-0 bg-[#0f172a]">
-        <img 
-          src="https://images.unsplash.com/photo-1481627834876-b7833e8f5570?q=80&w=2400&auto=format&fit=crop" 
-          alt="Atmospheric Library" 
-          className="w-full h-full object-cover opacity-20 transition-transform duration-100 ease-out"
-          style={{ transform: `scale(1.1) translate(${offset.x * -0.5}px, ${offset.y * -0.5}px)` }}
-        />
-        {/* Gradients for text readability - Darker Overlays */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0f172a] via-[#0f172a]/90 to-transparent" />
-        <div className="absolute inset-0 bg-radial-gradient from-transparent to-[#0f172a] opacity-90" />
-      </div>
-
-      <div className="relative z-20 max-w-4xl w-full text-center flex flex-col items-center animate-slide-up">
+      {/* Content */}
+      <div 
+        className="relative z-20 max-w-4xl w-full text-center flex flex-col items-center animate-slide-up"
+        style={{ transform: `translate(${offset.x * 0.2}px, ${offset.y * 0.2}px)` }}
+      >
         <h1 className="text-5xl md:text-8xl font-serif font-bold text-white mb-6 leading-[0.9] drop-shadow-2xl">
           Stories matching <br /> <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent-gold to-yellow-200">your soul.</span>
         </h1>
-        <p className="text-lg md:text-xl text-slate-300 mb-10 max-w-2xl leading-relaxed shadow-black drop-shadow-md mx-auto">
+        <p className="text-lg md:text-xl text-slate-200 mb-10 max-w-2xl leading-relaxed shadow-black drop-shadow-lg mx-auto font-light">
           Forget algorithms based on sales. Atmosphera curates books based on the weather outside and the feeling inside.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center w-full">
@@ -47,7 +38,7 @@ export const Hero: React.FC<HeroProps> = ({ onStart, onBrowse }) => {
             <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
             Start Curating
           </Button>
-          <Button onClick={onBrowse} variant="secondary" className="px-8 py-4 text-lg bg-white/10 backdrop-blur-md hover:bg-white/20 border border-white/10">
+          <Button onClick={onBrowse} variant="secondary" className="px-8 py-4 text-lg bg-white/5 backdrop-blur-md hover:bg-white/10 border border-white/20">
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             Browse Collections
           </Button>

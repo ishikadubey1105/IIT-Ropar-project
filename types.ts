@@ -1,3 +1,4 @@
+
 export interface Book {
   id?: string; // unique identifier (title + author slug)
   title: string;
@@ -11,6 +12,7 @@ export interface Book {
   excerpt: string;
   ebookUrl?: string; // Link to the e-book if available
   moviePairing?: string; // Media recommendation based on color/vibe
+  language?: string; // Added language support
 }
 
 export interface WebSource {
