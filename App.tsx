@@ -116,7 +116,7 @@ function App() {
         }}
       />
 
-      <div className="relative z-10 -mt-24 pb-20 space-y-4" id="browse-start">
+      <div className="relative z-10 pb-20 space-y-4" id="browse-start">
         
         {loading && (
           <div className="flex items-center justify-center h-40">

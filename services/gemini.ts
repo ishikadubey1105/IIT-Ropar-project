@@ -132,7 +132,7 @@ export const getTrendingBooks = async (): Promise<Book[]> => {
   const model = "gemini-2.5-flash";
   
   const prompt = `
-    Recommend 5 trending/classic books. Distinct genres.
+    Recommend 10 trending/classic books. Distinct genres.
     CRITICAL: Provide ACCURATE ISBN-13s. Include ebookUrl if available. Include moviePairing.
   `;
 
