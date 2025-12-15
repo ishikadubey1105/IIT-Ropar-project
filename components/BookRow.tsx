@@ -22,27 +22,34 @@ export const BookRow: React.FC<BookRowProps> = ({ title, books, onBookClick }) =
   if (books.length === 0) return null;
 
   return (
-    <div className="mb-12 pl-6 md:pl-12 relative group/row">
-      <h2 className="text-2xl md:text-3xl text-slate-100 font-medium mb-6 font-serif tracking-wide">{title}</h2>
+    <div className="mb-16 pl-6 md:pl-12 relative group/row animate-fade-in">
+      <div className="flex items-center gap-4 mb-6">
+        <h2 className="text-2xl md:text-4xl text-white font-medium font-serif tracking-wide drop-shadow-lg">{title}</h2>
+        <div className="h-[1px] bg-gradient-to-r from-accent-gold/50 to-transparent flex-1 mt-2"></div>
+      </div>
       
       <div className="group relative">
         <button 
           onClick={() => scroll('left')}
-          className="absolute left-0 top-0 bottom-0 z-40 bg-gradient-to-r from-black/80 to-transparent w-16 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+          className="absolute left-0 top-0 bottom-0 z-40 bg-gradient-to-r from-black/80 to-transparent w-16 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:w-20"
         >
-           <svg className="w-8 h-8 text-white drop-shadow-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
+           <svg className="w-8 h-8 text-white drop-shadow-lg transform hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
         </button>
 
         <div 
           ref={rowRef}
-          className="flex gap-4 md:gap-6 overflow-x-auto scrollbar-hide pb-12 snap-x pr-12"
+          className="flex gap-6 overflow-x-auto scrollbar-hide pb-12 snap-x pr-12 items-stretch"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {books.map((book, i) => (
             <div 
-              key={i} 
+              key={`${book.title}-${i}`} 
               onClick={() => onBookClick(book)}
-              className="flex-none w-[160px] md:w-[220px] aspect-[2/3] relative rounded-lg overflow-hidden cursor-pointer transition-all duration-300 hover:scale-105 hover:z-10 snap-start shadow-xl group/card border border-slate-800 hover:border-accent-gold/50"
+              className="flex-none w-[160px] md:w-[220px] aspect-[2/3] relative rounded-lg overflow-hidden cursor-pointer transition-all duration-500 hover:scale-105 hover:-translate-y-2 hover:shadow-[0_20px_40px_-10px_rgba(0,0,0,0.5)] snap-start shadow-xl group/card border border-white/5 opacity-0 animate-fade-in"
+              style={{ 
+                animationDelay: `${i * 100}ms`, 
+                animationFillMode: 'forwards' 
+              }} 
             >
               <BookCover 
                 isbn={book.isbn} 
@@ -53,12 +60,14 @@ export const BookRow: React.FC<BookRowProps> = ({ title, books, onBookClick }) =
               />
               
               {/* Hover overlay info */}
-              <div className="absolute inset-0 bg-black/90 opacity-0 group-hover/card:opacity-100 transition-opacity flex flex-col items-center justify-center p-6 text-center backdrop-blur-sm z-20">
-                 <h4 className="text-white font-serif font-bold mb-2 line-clamp-2">{book.title}</h4>
-                 <p className="text-xs text-slate-300 mb-4 line-clamp-4 leading-relaxed">{book.description}</p>
-                 <span className="text-accent-gold text-xs uppercase tracking-wider border border-accent-gold px-3 py-1.5 rounded-full hover:bg-accent-gold hover:text-black transition-colors font-bold">
-                   View Details
-                 </span>
+              <div className="absolute inset-0 bg-black/80 opacity-0 group-hover/card:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center p-6 text-center backdrop-blur-sm z-20">
+                 <div className="transform translate-y-4 group-hover/card:translate-y-0 transition-transform duration-300">
+                   <h4 className="text-white font-serif font-bold mb-3 line-clamp-2 text-lg">{book.title}</h4>
+                   <p className="text-xs text-slate-300 mb-6 line-clamp-3 leading-relaxed font-light">{book.description}</p>
+                   <span className="text-accent-gold text-xs uppercase tracking-wider border border-accent-gold/50 px-4 py-2 rounded-full hover:bg-accent-gold hover:text-black transition-colors font-bold shadow-lg">
+                     Explore
+                   </span>
+                 </div>
               </div>
             </div>
           ))}
@@ -66,9 +75,9 @@ export const BookRow: React.FC<BookRowProps> = ({ title, books, onBookClick }) =
 
         <button 
           onClick={() => scroll('right')}
-          className="absolute right-0 top-0 bottom-0 z-40 bg-gradient-to-l from-black/80 to-transparent w-16 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+          className="absolute right-0 top-0 bottom-0 z-40 bg-gradient-to-l from-black/80 to-transparent w-16 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:w-20"
         >
-           <svg className="w-8 h-8 text-white drop-shadow-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
+           <svg className="w-8 h-8 text-white drop-shadow-lg transform hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
         </button>
       </div>
     </div>

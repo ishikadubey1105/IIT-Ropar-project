@@ -10,6 +10,7 @@ export interface Book {
   firstSentence?: string;
   excerpt: string;
   ebookUrl?: string; // Link to the e-book if available
+  moviePairing?: string; // Media recommendation based on color/vibe
 }
 
 export interface WebSource {
@@ -59,6 +60,7 @@ export enum WorldSetting {
 }
 
 export interface UserPreferences {
+  age: string;
   weather: WeatherType | null;
   mood: MoodType | null;
   pace: ReadingPace | null;

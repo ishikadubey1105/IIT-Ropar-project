@@ -3,6 +3,7 @@ import { Book, WebSource } from '../types';
 import { generateAudioPreview, fetchBookDetails } from '../services/gemini';
 import { isInWishlist, toggleWishlist } from '../services/storage';
 import { MoodVisualizer } from './MoodVisualizer';
+import { BookCover } from './BookCover';
 
 interface BookCardProps {
   book: Book;
@@ -78,11 +79,24 @@ export const BookCard: React.FC<BookCardProps> = ({ book, index }) => {
       <div className="absolute top-0 left-0 w-full h-1.5" style={{ backgroundColor: book.moodColor }} />
       
       <div className="p-6 md:p-8 flex flex-col h-full">
-        <div className="mb-4 flex justify-between items-start">
-          <span className="text-xs uppercase tracking-widest text-slate-400 border border-slate-700 px-2 py-1 rounded-md">
+        <div className="mb-6 flex justify-between items-start">
+          <span className="text-xs uppercase tracking-widest text-slate-400 border border-slate-700 px-2 py-1 rounded-md mt-1">
             {book.genre}
           </span>
           <div className="flex gap-2">
+            {/* E-Book Button */}
+            {book.ebookUrl && (
+              <a 
+                href={book.ebookUrl} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-center justify-center w-10 h-10 rounded-full border border-slate-600 transition-all duration-300 hover:border-accent-gold hover:text-accent-gold text-slate-400"
+                title="Get E-Book"
+              >
+                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+              </a>
+            )}
+
             <button
               onClick={handleToggleSave}
               className={`flex items-center justify-center w-10 h-10 rounded-full border transition-all duration-300
@@ -114,10 +128,24 @@ export const BookCard: React.FC<BookCardProps> = ({ book, index }) => {
           </div>
         </div>
 
-        <h3 className="text-2xl font-serif font-bold text-white mb-1 group-hover:text-accent-gold transition-colors">
-          {book.title}
-        </h3>
-        <p className="text-sm font-medium text-slate-400 mb-6 italic">by {book.author}</p>
+        {/* Content Row: Cover & Info */}
+        <div className="flex gap-6 mb-6">
+            <div className="w-24 md:w-32 aspect-[2/3] shrink-0 rounded-lg overflow-hidden shadow-lg border border-slate-700">
+                <BookCover 
+                    isbn={book.isbn} 
+                    title={book.title} 
+                    author={book.author} 
+                    moodColor={book.moodColor}
+                    showText={false}
+                />
+            </div>
+            <div>
+                <h3 className="text-2xl font-serif font-bold text-white mb-2 group-hover:text-accent-gold transition-colors leading-tight">
+                {book.title}
+                </h3>
+                <p className="text-sm font-medium text-slate-400 italic">by {book.author}</p>
+            </div>
+        </div>
 
         <div className="bg-slate-900/50 p-4 rounded-lg mb-6 border-l-2 border-slate-700">
            <p className="text-slate-300 text-sm leading-relaxed">"{book.description}"</p>

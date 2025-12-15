@@ -126,6 +126,25 @@ export const BookDetailModal: React.FC<BookDetailModalProps> = ({ book, onClose,
                <p className="text-slate-300 leading-loose text-lg font-light tracking-wide">{book.description}</p>
             </div>
             
+            {/* Movie Pairing Section */}
+            {book.moviePairing && (
+              <div className="bg-gradient-to-r from-[#1e1b4b] to-slate-900 rounded-xl p-6 border border-indigo-500/30 relative overflow-hidden group">
+                 <div className="absolute top-0 right-0 p-4 opacity-20">
+                    <svg className="w-20 h-20" fill="currentColor" viewBox="0 0 24 24"><path d="M18 3v2h-2V3H8v2H6V3H4v18h2v-2h2v2h8v-2h2v2h2V3h-2zM8 17H6v-2h2v2zm0-4H6v-2h2v2zm0-4H6V7h2v2zm10 8h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V7h2v2z"/></svg>
+                 </div>
+                 <h4 className="text-indigo-300 text-xs font-bold uppercase mb-2 tracking-widest relative z-10">Atmospheric Media Pairing</h4>
+                 <div className="flex items-center gap-4 relative z-10">
+                   <div className="w-12 h-12 rounded-full bg-indigo-500/20 flex items-center justify-center shrink-0">
+                     <svg className="w-6 h-6 text-indigo-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" /></svg>
+                   </div>
+                   <div>
+                     <p className="text-white text-lg font-medium">If you like this, watch:</p>
+                     <p className="text-indigo-200 text-xl font-serif italic">{book.moviePairing}</p>
+                   </div>
+                 </div>
+              </div>
+            )}
+
             <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-xl p-6 border border-slate-700/50 shadow-inner">
                <h4 className="text-accent-gold text-xs font-bold uppercase mb-3 tracking-widest">Why it fits your vibe</h4>
                <p className="text-slate-200 text-lg leading-relaxed">{book.reasoning}</p>

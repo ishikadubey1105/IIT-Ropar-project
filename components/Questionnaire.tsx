@@ -52,6 +52,43 @@ const LanguageStep: React.FC<StepProps> = ({ onNext, data }) => {
   );
 };
 
+const AgeStep: React.FC<StepProps> = ({ onNext, onBack, data }) => {
+  const ages = [
+    { label: "Under 12", value: "child", desc: "Whimsical & Safe" },
+    { label: "13 - 17", value: "teen", desc: "YA & Coming of Age" },
+    { label: "18 - 24", value: "young_adult", desc: "New Adult & Bold" },
+    { label: "25 - 40", value: "adult", desc: "Complex & Nuanced" },
+    { label: "40+", value: "mature", desc: "Classic & Deep" },
+  ];
+
+  return (
+    <div className="animate-fade-in space-y-8 pb-12">
+      <h2 className="text-3xl md:text-4xl font-serif text-center mb-2 leading-tight">A question of time.</h2>
+      <p className="text-slate-400 text-center mb-8">Select your age group to tailor the complexity and themes.</p>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
+        {ages.map((item) => (
+          <button
+            key={item.value}
+            onClick={() => onNext({ age: item.value })}
+            className={`p-6 rounded-xl border transition-all duration-300 flex flex-col items-center justify-center gap-2 group
+              ${data.age === item.value 
+                ? 'bg-accent-gold text-deep-bg border-accent-gold shadow-lg' 
+                : 'bg-slate-800/50 border-slate-700 text-slate-300 hover:bg-slate-800 hover:border-slate-500'
+              }`}
+          >
+            <span className="text-xl font-serif font-bold">{item.label}</span>
+            <span className={`text-xs uppercase tracking-widest ${data.age === item.value ? 'text-black/70' : 'text-slate-500'}`}>{item.desc}</span>
+          </button>
+        ))}
+      </div>
+       <div className="flex justify-center mt-12">
+        <Button variant="ghost" onClick={onBack}>Back</Button>
+      </div>
+    </div>
+  );
+};
+
 const WeatherStep: React.FC<StepProps> = ({ onNext, onBack, data }) => {
   const options = Object.values(WeatherType);
   
@@ -231,13 +268,14 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ onComplete }) => {
     pace: null,
     setting: null,
     language: 'English',
+    age: '',
     specificInterest: ''
   });
 
   const handleNext = (data: Partial<UserPreferences>) => {
     const newPrefs = { ...prefs, ...data };
     setPrefs(newPrefs);
-    if (step < 5) {
+    if (step < 6) { 
       setStep(step + 1);
     } else {
       onComplete(newPrefs);
@@ -250,6 +288,7 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ onComplete }) => {
 
   const steps = [
     <LanguageStep key="lang" onNext={handleNext} onBack={handleBack} data={prefs} />,
+    <AgeStep key="age" onNext={handleNext} onBack={handleBack} data={prefs} />,
     <WeatherStep key="weather" onNext={handleNext} onBack={handleBack} data={prefs} />,
     <MoodStep key="mood" onNext={handleNext} onBack={handleBack} data={prefs} />,
     <PaceStep key="pace" onNext={handleNext} onBack={handleBack} data={prefs} />,
@@ -263,7 +302,7 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ onComplete }) => {
       <div className="w-full h-1 bg-slate-800 rounded-full mb-12 overflow-hidden">
         <div 
           className="h-full bg-accent-gold transition-all duration-500 ease-out"
-          style={{ width: `${((step + 1) / 6) * 100}%` }}
+          style={{ width: `${((step + 1) / 7) * 100}%` }}
         />
       </div>
       

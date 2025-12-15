@@ -45,9 +45,10 @@ const bookSchema: Schema = {
     reasoning: { type: Type.STRING, description: "One short sentence on why it fits." },
     moodColor: { type: Type.STRING, description: "Hex color code matching the book's vibe." },
     excerpt: { type: Type.STRING, description: "A very short, atmospheric teaser sentence." },
-    ebookUrl: { type: Type.STRING, description: "A link to the E-Book (Project Gutenberg, OpenLibrary, or Google Books). If not free, provide a Google Books/Amazon link." }
+    ebookUrl: { type: Type.STRING, description: "A link to the E-Book (Project Gutenberg, OpenLibrary, or Google Books). If not free, provide a Google Books/Amazon link." },
+    moviePairing: { type: Type.STRING, description: "A movie or visual media recommendation that matches the book's specific mood and aesthetic." }
   },
-  required: ["title", "author", "isbn", "reasoning", "moodColor", "genre", "description", "excerpt"],
+  required: ["title", "author", "isbn", "reasoning", "moodColor", "genre", "description", "excerpt", "moviePairing"],
 };
 
 export const getBookRecommendations = async (prefs: UserPreferences): Promise<Book[]> => {
@@ -57,13 +58,21 @@ export const getBookRecommendations = async (prefs: UserPreferences): Promise<Bo
   
   const prompt = `
     Recommend 4 atmospheric books in ${prefs.language || 'English'}.
-    Context: Weather=${prefs.weather}, Mood=${prefs.mood}, Pace=${prefs.pace}, Setting=${prefs.setting}, Interest=${sanitizedInterest}.
+    User Context:
+    - Age Group: ${prefs.age} (CRITICAL: Filter content appropriateness based on this).
+    - Weather: ${prefs.weather}
+    - Mood: ${prefs.mood}
+    - Pace: ${prefs.pace}
+    - Setting: ${prefs.setting}
+    - Interest: ${sanitizedInterest}
     
     CRITICAL INSTRUCTIONS:
-    1. Return VALID JSON matching the schema.
-    2. ISBN MUST be for a widely available PAPERBACK edition (ISBN-13 preferred).
-    3. Include a valid 'ebookUrl' for each book (prioritize free sources like Project Gutenberg if public domain).
-    4. Keep descriptions brief.
+    1. **Markov Chain Genre Switching**: Do NOT recommend 4 books of the exact same genre. Simulate a Markov chain where the genre shifts slightly between recommendations to keep engagement high (e.g., Fantasy -> Magical Realism -> Historical Fiction).
+    2. **Aesthetics**: Infer a dominant "Mood Color" and "Movie Pairing" for each book based on the User Context provided.
+    3. **Safety**: If Age Group is 'child' or 'teen', strictly exclude adult themes/erotica.
+    4. Return VALID JSON matching the schema.
+    5. ISBN MUST be for a widely available PAPERBACK edition (ISBN-13 preferred).
+    6. Include a valid 'ebookUrl' for each book (prioritize free sources like Project Gutenberg if public domain).
   `;
 
   try {
@@ -97,6 +106,7 @@ export const searchBooks = async (query: string): Promise<Book[]> => {
     1. Return VALID JSON.
     2. Provide ACCURATE ISBN-13s.
     3. Include 'ebookUrl' where possible.
+    4. Include a 'moviePairing' based on the book's vibe.
   `;
 
   try {
@@ -123,7 +133,7 @@ export const getTrendingBooks = async (): Promise<Book[]> => {
   
   const prompt = `
     Recommend 5 trending/classic books. Distinct genres.
-    CRITICAL: Provide ACCURATE ISBN-13s. Include ebookUrl if available.
+    CRITICAL: Provide ACCURATE ISBN-13s. Include ebookUrl if available. Include moviePairing.
   `;
 
   try {
