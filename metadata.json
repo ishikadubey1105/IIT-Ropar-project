@@ -1,0 +1,5 @@
+{
+  "name": "Atmosphera",
+  "description": "An emotionally intelligent book recommendation engine that curates reading lists based on your current mood, weather, and environmental vibe.",
+  "requestFramePermissions": []
+}
