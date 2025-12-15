@@ -156,10 +156,14 @@ const FinalStep: React.FC<StepProps> = ({ onNext, onBack, data }) => {
           <input
             type="text"
             value={interest}
+            maxLength={100} // SECURITY: Prevent massive payloads
             onChange={(e) => setInterest(e.target.value)}
             placeholder="e.g., 'Love triangles', 'Space pirates', or 'Dragons'"
             className="w-full bg-slate-800/50 border border-slate-600 rounded-lg px-6 py-4 text-white placeholder-slate-500 focus:outline-none focus:border-accent-gold focus:ring-1 focus:ring-accent-gold transition-all"
           />
+           <div className="text-right text-xs text-slate-500 mt-2">
+            {interest.length}/100
+          </div>
         </div>
         
         <div className="flex justify-center gap-4 pt-6">

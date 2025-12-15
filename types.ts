@@ -6,7 +6,12 @@ export interface Book {
   moodColor: string;
   genre: string;
   firstSentence?: string;
-  excerpt: string; // A creative generated excerpt for audio preview
+  excerpt: string;
+}
+
+export interface WebSource {
+  uri: string;
+  title: string;
 }
 
 export enum WeatherType {
