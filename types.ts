@@ -6,6 +6,7 @@ export interface Book {
   moodColor: string;
   genre: string;
   firstSentence?: string;
+  excerpt: string; // A creative generated excerpt for audio preview
 }
 
 export enum WeatherType {
@@ -15,7 +16,10 @@ export enum WeatherType {
   CLOUDY = 'Cloudy & Gray',
   SNOWY = 'Snowy & Quiet',
   NIGHT = 'Clear Night',
-  FOGGY = 'Foggy & Mysterious'
+  FOGGY = 'Foggy & Mysterious',
+  WINDY = 'Windy & Crisp',
+  HUMID = 'Humid & Muggy',
+  OVERCAST = 'Overcast & Gloomy'
 }
 
 export enum MoodType {
@@ -35,10 +39,22 @@ export enum ReadingPace {
   MEDIUM = 'Moderate pace'
 }
 
+export enum WorldSetting {
+  REAL_WORLD = 'Modern Real World',
+  HISTORICAL = 'Historical Past',
+  FANTASY = 'High Fantasy Realm',
+  SCIFI = 'Sci-Fi / Futuristic',
+  DYSTOPIAN = 'Dystopian / Post-Apocalyptic',
+  MAGICAL_REALISM = 'Magical Realism',
+  GOTHIC = 'Gothic / Eerie',
+  SURPRISE = 'Surprise Me'
+}
+
 export interface UserPreferences {
   weather: WeatherType | null;
   mood: MoodType | null;
   pace: ReadingPace | null;
+  setting: WorldSetting | null;
   specificInterest: string;
 }
 
