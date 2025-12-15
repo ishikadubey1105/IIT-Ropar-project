@@ -11,12 +11,53 @@ const Icons = {
   Wind: () => <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2" /></svg>
 };
 
-const WeatherStep: React.FC<StepProps> = ({ onNext, data }) => {
+const LanguageStep: React.FC<StepProps> = ({ onNext, data }) => {
+  const languages = [
+    { code: "English", native: "English" },
+    { code: "Hindi", native: "हिन्दी" },
+    { code: "Spanish", native: "Español" },
+    { code: "French", native: "Français" },
+    { code: "German", native: "Deutsch" },
+    { code: "Japanese", native: "日本語" },
+    { code: "Russian", native: "Русский" },
+    { code: "Arabic", native: "العربية" },
+    { code: "Italian", native: "Italiano" },
+    { code: "Korean", native: "한국어" },
+    { code: "Chinese", native: "中文" },
+    { code: "Portuguese", native: "Português" },
+  ];
+  
+  return (
+    <div className="animate-fade-in space-y-8 pb-12">
+      <h2 className="text-3xl md:text-4xl font-serif text-center mb-2 leading-tight">In which tongue shall we read?</h2>
+      <p className="text-slate-400 text-center mb-8">Select your preferred language for the journey.</p>
+      
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {languages.map((lang) => (
+          <button
+            key={lang.code}
+            onClick={() => onNext({ language: lang.code })}
+            className={`p-4 h-24 rounded-xl border transition-all duration-300 flex flex-col items-center justify-center gap-1 shadow-lg hover:-translate-y-1 group
+              ${data.language === lang.code 
+                ? 'bg-accent-gold text-deep-bg border-accent-gold shadow-accent-gold/30' 
+                : 'bg-slate-800/50 border-slate-700 text-slate-300 hover:border-slate-500 hover:bg-slate-800'
+              }`}
+          >
+            <span className="text-lg font-bold">{lang.native}</span>
+            <span className={`text-xs uppercase tracking-wider ${data.language === lang.code ? 'text-black/70' : 'text-slate-500 group-hover:text-slate-400'}`}>{lang.code}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const WeatherStep: React.FC<StepProps> = ({ onNext, onBack, data }) => {
   const options = Object.values(WeatherType);
   
   return (
-    <div className="animate-fade-in space-y-8">
-      <h2 className="text-3xl md:text-4xl font-serif text-center mb-2">What is the sky telling you?</h2>
+    <div className="animate-fade-in space-y-8 pb-12">
+      <h2 className="text-3xl md:text-4xl font-serif text-center mb-2 leading-tight">What is the sky telling you?</h2>
       <p className="text-slate-400 text-center mb-8">Select the current atmosphere outside your window.</p>
       
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -44,6 +85,9 @@ const WeatherStep: React.FC<StepProps> = ({ onNext, data }) => {
           </button>
         ))}
       </div>
+       <div className="flex justify-center mt-12">
+        <Button variant="ghost" onClick={onBack}>Back</Button>
+      </div>
     </div>
   );
 };
@@ -52,8 +96,8 @@ const MoodStep: React.FC<StepProps> = ({ onNext, onBack, data }) => {
   const moods = Object.values(MoodType);
   
   return (
-    <div className="animate-fade-in space-y-8">
-      <h2 className="text-3xl md:text-4xl font-serif text-center mb-2">How does your soul feel?</h2>
+    <div className="animate-fade-in space-y-8 pb-12">
+      <h2 className="text-3xl md:text-4xl font-serif text-center mb-2 leading-tight">How does your soul feel?</h2>
       <p className="text-slate-400 text-center mb-8">Be honest. We'll find a companion for your emotion.</p>
       
       <div className="flex flex-wrap justify-center gap-4">
@@ -81,8 +125,8 @@ const MoodStep: React.FC<StepProps> = ({ onNext, onBack, data }) => {
 
 const PaceStep: React.FC<StepProps> = ({ onNext, onBack, data }) => {
   return (
-    <div className="animate-fade-in space-y-8 max-w-2xl mx-auto">
-      <h2 className="text-3xl md:text-4xl font-serif text-center mb-2">Choose your tempo</h2>
+    <div className="animate-fade-in space-y-8 max-w-2xl mx-auto pb-12">
+      <h2 className="text-3xl md:text-4xl font-serif text-center mb-2 leading-tight">Choose your tempo</h2>
       <p className="text-slate-400 text-center mb-8">How fast do you want the world to move?</p>
       
       <div className="space-y-4">
@@ -111,8 +155,8 @@ const PaceStep: React.FC<StepProps> = ({ onNext, onBack, data }) => {
 
 const SettingStep: React.FC<StepProps> = ({ onNext, onBack, data }) => {
   return (
-    <div className="animate-fade-in space-y-8 max-w-3xl mx-auto">
-      <h2 className="text-3xl md:text-4xl font-serif text-center mb-2">Where do you want to go?</h2>
+    <div className="animate-fade-in space-y-8 max-w-3xl mx-auto pb-12">
+      <h2 className="text-3xl md:text-4xl font-serif text-center mb-2 leading-tight">Where do you want to go?</h2>
       <p className="text-slate-400 text-center mb-8">Choose a setting for your journey.</p>
       
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -147,8 +191,8 @@ const FinalStep: React.FC<StepProps> = ({ onNext, onBack, data }) => {
   };
 
   return (
-    <div className="animate-fade-in space-y-8 max-w-xl mx-auto">
-      <h2 className="text-3xl md:text-4xl font-serif text-center mb-2">The final touch</h2>
+    <div className="animate-fade-in space-y-8 max-w-xl mx-auto pb-12">
+      <h2 className="text-3xl md:text-4xl font-serif text-center mb-2 leading-tight">The final touch</h2>
       <p className="text-slate-400 text-center mb-8">Any specific tropes, topics, or ingredients? (Optional)</p>
       
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -156,7 +200,7 @@ const FinalStep: React.FC<StepProps> = ({ onNext, onBack, data }) => {
           <input
             type="text"
             value={interest}
-            maxLength={100} // SECURITY: Prevent massive payloads
+            maxLength={100}
             onChange={(e) => setInterest(e.target.value)}
             placeholder="e.g., 'Love triangles', 'Space pirates', or 'Dragons'"
             className="w-full bg-slate-800/50 border border-slate-600 rounded-lg px-6 py-4 text-white placeholder-slate-500 focus:outline-none focus:border-accent-gold focus:ring-1 focus:ring-accent-gold transition-all"
@@ -166,9 +210,9 @@ const FinalStep: React.FC<StepProps> = ({ onNext, onBack, data }) => {
           </div>
         </div>
         
-        <div className="flex justify-center gap-4 pt-6">
-          <Button type="button" variant="ghost" onClick={onBack}>Back</Button>
-          <Button type="submit" variant="primary">Reveal Recommendations</Button>
+        <div className="flex flex-col md:flex-row justify-center gap-4 pt-6">
+          <Button type="button" variant="ghost" onClick={onBack} className="order-2 md:order-1">Back</Button>
+          <Button type="submit" variant="primary" className="order-1 md:order-2">Reveal Recommendations</Button>
         </div>
       </form>
     </div>
@@ -186,13 +230,14 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ onComplete }) => {
     mood: null,
     pace: null,
     setting: null,
+    language: 'English',
     specificInterest: ''
   });
 
   const handleNext = (data: Partial<UserPreferences>) => {
     const newPrefs = { ...prefs, ...data };
     setPrefs(newPrefs);
-    if (step < 4) { // Increased step count
+    if (step < 5) {
       setStep(step + 1);
     } else {
       onComplete(newPrefs);
@@ -204,6 +249,7 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ onComplete }) => {
   };
 
   const steps = [
+    <LanguageStep key="lang" onNext={handleNext} onBack={handleBack} data={prefs} />,
     <WeatherStep key="weather" onNext={handleNext} onBack={handleBack} data={prefs} />,
     <MoodStep key="mood" onNext={handleNext} onBack={handleBack} data={prefs} />,
     <PaceStep key="pace" onNext={handleNext} onBack={handleBack} data={prefs} />,
@@ -212,12 +258,12 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ onComplete }) => {
   ];
 
   return (
-    <div className="w-full max-w-4xl mx-auto px-4 py-12">
+    <div className="w-full max-w-4xl mx-auto px-4 py-12 md:py-20">
       {/* Progress Bar */}
       <div className="w-full h-1 bg-slate-800 rounded-full mb-12 overflow-hidden">
         <div 
           className="h-full bg-accent-gold transition-all duration-500 ease-out"
-          style={{ width: `${((step + 1) / 5) * 100}%` }}
+          style={{ width: `${((step + 1) / 6) * 100}%` }}
         />
       </div>
       

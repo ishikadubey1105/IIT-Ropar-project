@@ -39,14 +39,15 @@ const bookSchema: Schema = {
   properties: {
     title: { type: Type.STRING },
     author: { type: Type.STRING },
+    isbn: { type: Type.STRING, description: "A valid ISBN-13 for the PAPERBACK edition. Crucial for cover images." },
     genre: { type: Type.STRING },
-    description: { type: Type.STRING, description: "A brief synopsis of the book." },
-    reasoning: { type: Type.STRING, description: "Why this book fits the user's specific mood and weather." },
-    moodColor: { type: Type.STRING, description: "A hex color code representing the vibe of the book." },
-    firstSentence: { type: Type.STRING, description: "The actual first sentence of the book." },
-    excerpt: { type: Type.STRING, description: "A short, atmospheric paragraph (~50 words) capturing the essence of the book, written to be read aloud as a teaser." }
+    description: { type: Type.STRING, description: "2 sentences max." },
+    reasoning: { type: Type.STRING, description: "One short sentence on why it fits." },
+    moodColor: { type: Type.STRING, description: "Hex color code matching the book's vibe." },
+    excerpt: { type: Type.STRING, description: "A very short, atmospheric teaser sentence." },
+    ebookUrl: { type: Type.STRING, description: "A link to the E-Book (Project Gutenberg, OpenLibrary, or Google Books). If not free, provide a Google Books/Amazon link." }
   },
-  required: ["title", "author", "reasoning", "moodColor", "genre", "description", "excerpt"],
+  required: ["title", "author", "isbn", "reasoning", "moodColor", "genre", "description", "excerpt"],
 };
 
 export const getBookRecommendations = async (prefs: UserPreferences): Promise<Book[]> => {
@@ -55,18 +56,14 @@ export const getBookRecommendations = async (prefs: UserPreferences): Promise<Bo
   const sanitizedInterest = sanitizeInput(prefs.specificInterest || "Surprise me");
   
   const prompt = `
-    Act as an expert bibliotherapist.
-    <user_context>
-      <weather>${prefs.weather}</weather>
-      <mood>${prefs.mood}</mood>
-      <pace>${prefs.pace}</pace>
-      <setting>${prefs.setting}</setting>
-      <user_notes>${sanitizedInterest}</user_notes>
-    </user_context>
-    <instructions>
-      Recommend 4 distinct books matching this specific atmospheric combination.
-      For 'excerpt', write a short, captivating teaser (~50 words) capturing the *vibe*.
-    </instructions>
+    Recommend 4 atmospheric books in ${prefs.language || 'English'}.
+    Context: Weather=${prefs.weather}, Mood=${prefs.mood}, Pace=${prefs.pace}, Setting=${prefs.setting}, Interest=${sanitizedInterest}.
+    
+    CRITICAL INSTRUCTIONS:
+    1. Return VALID JSON matching the schema.
+    2. ISBN MUST be for a widely available PAPERBACK edition (ISBN-13 preferred).
+    3. Include a valid 'ebookUrl' for each book (prioritize free sources like Project Gutenberg if public domain).
+    4. Keep descriptions brief.
   `;
 
   try {
@@ -77,7 +74,6 @@ export const getBookRecommendations = async (prefs: UserPreferences): Promise<Bo
         config: {
           responseMimeType: "application/json",
           responseSchema: { type: Type.ARRAY, items: bookSchema },
-          systemInstruction: "You are Atmosphera, a secure and sophisticated AI book curator.",
         }
       });
     });
@@ -94,16 +90,13 @@ export const searchBooks = async (query: string): Promise<Book[]> => {
   const sanitizedQuery = sanitizeInput(query);
   
   const prompt = `
-    Act as an expert librarian.
-    User Query: "${sanitizedQuery}"
+    Search for 4 books matching: "${sanitizedQuery}".
+    If query is a specific book, return it + 3 similar.
     
-    Instructions:
-    1. Search for books that match the user's query (title, author, or topic).
-    2. Recommend 4 relevant books.
-    3. Ensure the output matches the required JSON schema strictly.
-    4. For 'reasoning', explain why it matches the query.
-    5. For 'moodColor', pick a color that fits the book's cover or vibe.
-    6. For 'excerpt', generate a compelling teaser.
+    CRITICAL INSTRUCTIONS:
+    1. Return VALID JSON.
+    2. Provide ACCURATE ISBN-13s.
+    3. Include 'ebookUrl' where possible.
   `;
 
   try {
@@ -114,7 +107,6 @@ export const searchBooks = async (query: string): Promise<Book[]> => {
         config: {
           responseMimeType: "application/json",
           responseSchema: { type: Type.ARRAY, items: bookSchema },
-          systemInstruction: "You are Atmosphera, a secure and sophisticated AI book curator.",
         }
       });
     });
@@ -122,6 +114,33 @@ export const searchBooks = async (query: string): Promise<Book[]> => {
   } catch (error) {
     console.error("Backend Error [Search]:", error);
     throw new Error("Unable to search books.");
+  }
+};
+
+export const getTrendingBooks = async (): Promise<Book[]> => {
+  if (!apiKey) return [];
+  const model = "gemini-2.5-flash";
+  
+  const prompt = `
+    Recommend 5 trending/classic books. Distinct genres.
+    CRITICAL: Provide ACCURATE ISBN-13s. Include ebookUrl if available.
+  `;
+
+  try {
+    const response = await callWithRetry(async () => {
+      return await ai.models.generateContent({
+        model,
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: { type: Type.ARRAY, items: bookSchema },
+        }
+      });
+    });
+    return JSON.parse(response.text || "[]") as Book[];
+  } catch (error) {
+    console.warn("Could not fetch trending", error);
+    return [];
   }
 };
 

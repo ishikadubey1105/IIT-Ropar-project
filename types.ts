@@ -1,12 +1,15 @@
 export interface Book {
+  id?: string; // unique identifier (title + author slug)
   title: string;
   author: string;
+  isbn?: string; // Added for fetching covers
   description: string;
   reasoning: string;
   moodColor: string;
   genre: string;
   firstSentence?: string;
   excerpt: string;
+  ebookUrl?: string; // Link to the e-book if available
 }
 
 export interface WebSource {
@@ -60,6 +63,7 @@ export interface UserPreferences {
   mood: MoodType | null;
   pace: ReadingPace | null;
   setting: WorldSetting | null;
+  language: string;
   specificInterest: string;
 }
 

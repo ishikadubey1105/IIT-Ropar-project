@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Book, WebSource } from '../types';
 import { generateAudioPreview, fetchBookDetails } from '../services/gemini';
+import { isInWishlist, toggleWishlist } from '../services/storage';
 import { MoodVisualizer } from './MoodVisualizer';
 
 interface BookCardProps {
@@ -13,16 +14,20 @@ export const BookCard: React.FC<BookCardProps> = ({ book, index }) => {
   const [isAudioLoading, setIsAudioLoading] = useState(false);
   const [details, setDetails] = useState<{ summary: string, sources: WebSource[] } | null>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
   
   const audioContextRef = useRef<AudioContext | null>(null);
   const sourceNodeRef = useRef<AudioBufferSourceNode | null>(null);
 
   useEffect(() => {
+    // Check initial saved state
+    setIsSaved(isInWishlist(book));
+
     return () => {
       if (sourceNodeRef.current) sourceNodeRef.current.stop();
       if (audioContextRef.current) audioContextRef.current.close();
     };
-  }, []);
+  }, [book]);
 
   const handlePlayPreview = async () => {
     if (isPlaying) {
@@ -60,6 +65,11 @@ export const BookCard: React.FC<BookCardProps> = ({ book, index }) => {
     setLoadingDetails(false);
   };
 
+  const handleToggleSave = () => {
+    const newState = toggleWishlist(book);
+    setIsSaved(newState);
+  };
+
   return (
     <div 
       className="group relative w-full bg-slate-800/80 backdrop-blur-md rounded-xl overflow-hidden shadow-2xl transition-all duration-500 hover:-translate-y-2 hover:shadow-accent-gold/20 flex flex-col border border-slate-700/50"
@@ -72,21 +82,36 @@ export const BookCard: React.FC<BookCardProps> = ({ book, index }) => {
           <span className="text-xs uppercase tracking-widest text-slate-400 border border-slate-700 px-2 py-1 rounded-md">
             {book.genre}
           </span>
-          <button 
-            onClick={handlePlayPreview}
-            disabled={isAudioLoading}
-            className={`flex items-center justify-center w-10 h-10 rounded-full border border-slate-600 transition-all duration-300
-              ${isPlaying ? 'bg-accent-gold border-accent-gold text-deep-bg' : 'hover:border-accent-gold hover:text-accent-gold text-slate-400'}
-            `}
-          >
-             {isAudioLoading ? (
-               <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-             ) : isPlaying ? (
-               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-             ) : (
-               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
-             )}
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={handleToggleSave}
+              className={`flex items-center justify-center w-10 h-10 rounded-full border transition-all duration-300
+                ${isSaved 
+                  ? 'bg-red-500/20 border-red-500 text-red-500' 
+                  : 'border-slate-600 text-slate-400 hover:border-red-400 hover:text-red-400'}
+              `}
+              title={isSaved ? "Remove from Wishlist" : "Add to Wishlist"}
+            >
+              <svg className="w-5 h-5" fill={isSaved ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+            </button>
+            <button 
+              onClick={handlePlayPreview}
+              disabled={isAudioLoading}
+              className={`flex items-center justify-center w-10 h-10 rounded-full border border-slate-600 transition-all duration-300
+                ${isPlaying ? 'bg-accent-gold border-accent-gold text-deep-bg' : 'hover:border-accent-gold hover:text-accent-gold text-slate-400'}
+              `}
+            >
+               {isAudioLoading ? (
+                 <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+               ) : isPlaying ? (
+                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+               ) : (
+                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
+               )}
+            </button>
+          </div>
         </div>
 
         <h3 className="text-2xl font-serif font-bold text-white mb-1 group-hover:text-accent-gold transition-colors">
