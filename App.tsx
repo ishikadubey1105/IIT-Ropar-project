@@ -3,7 +3,7 @@ import { Questionnaire } from './components/Questionnaire';
 import { BookCard } from './components/BookCard';
 import { Button } from './components/Button';
 import { LiveLibrarian } from './components/LiveLibrarian';
-import { getBookRecommendations } from './services/gemini';
+import { getBookRecommendations, searchBooks } from './services/gemini';
 import { UserPreferences, Book } from './types';
 
 function App() {
@@ -12,6 +12,7 @@ function App() {
   const [recommendations, setRecommendations] = useState<Book[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [userPrefs, setUserPrefs] = useState<UserPreferences | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const handleComplete = async (prefs: UserPreferences) => {
     setUserPrefs(prefs);
@@ -32,6 +33,23 @@ function App() {
     setUserPrefs(null);
     setStarted(true);
     setError(null);
+    setSearchQuery('');
+  };
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+    
+    setLoading(true);
+    setError(null);
+    try {
+      const books = await searchBooks(searchQuery);
+      setRecommendations(books);
+    } catch (err) {
+      setError("Could not find books matching your query.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Aesthetic Background Component
@@ -115,16 +133,35 @@ function App() {
         <StarryBackground />
         <div className="relative z-10 p-6 md:p-12 overflow-x-hidden">
           <header className="max-w-7xl mx-auto mb-16 flex flex-col md:flex-row md:items-end justify-between gap-6 animate-fade-in">
-            <div>
+            <div className="flex-1">
               <h2 className="text-5xl font-serif font-bold mb-3 text-transparent bg-clip-text bg-gradient-to-br from-white to-slate-500">Curated Collection</h2>
               <p className="text-slate-400 text-lg">
-                For a <span className="text-accent-gold border-b border-accent-gold/30">{userPrefs?.weather}</span> day, 
-                feeling <span className="text-accent-gold border-b border-accent-gold/30">{userPrefs?.mood}</span>.
+                {userPrefs ? (
+                    <>For a <span className="text-accent-gold border-b border-accent-gold/30">{userPrefs.weather}</span> day, 
+                    feeling <span className="text-accent-gold border-b border-accent-gold/30">{userPrefs.mood}</span>.</>
+                ) : (
+                    <>Based on your search for <span className="text-accent-gold border-b border-accent-gold/30">"{searchQuery}"</span>.</>
+                )}
               </p>
             </div>
-            <Button variant="outline" onClick={handleRestart} className="whitespace-nowrap backdrop-blur-sm bg-black/20">
-              Restart Journey
-            </Button>
+
+            <div className="flex flex-col md:flex-row gap-4 items-center">
+               <form onSubmit={handleSearch} className="relative group">
+                 <input 
+                    type="text" 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search titles or authors..." 
+                    className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-full px-5 py-2.5 w-64 text-sm focus:outline-none focus:border-accent-gold focus:ring-1 focus:ring-accent-gold transition-all text-white placeholder-slate-500"
+                 />
+                 <button type="submit" className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-accent-gold transition-colors">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                 </button>
+               </form>
+               <Button variant="outline" onClick={handleRestart} className="whitespace-nowrap backdrop-blur-sm bg-black/20 text-sm py-2.5">
+                 Restart Journey
+               </Button>
+            </div>
           </header>
 
           <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-16">
@@ -150,7 +187,7 @@ function App() {
         <div className="relative z-10 max-w-md bg-black/40 backdrop-blur-md p-10 rounded-2xl border border-red-900/30">
           <h2 className="text-4xl font-serif text-red-400 mb-6">Connection Severed</h2>
           <p className="text-slate-400 mb-8 leading-relaxed">{error}</p>
-          <Button onClick={() => handleComplete(userPrefs!)} variant="outline" className="border-red-500/50 text-red-400 hover:bg-red-950/30">Try Again</Button>
+          <Button onClick={() => userPrefs ? handleComplete(userPrefs) : handleSearch({ preventDefault: () => {} } as React.FormEvent)} variant="outline" className="border-red-500/50 text-red-400 hover:bg-red-950/30">Try Again</Button>
           <div className="mt-8">
             <button onClick={handleRestart} className="text-sm text-slate-500 hover:text-white transition-colors">
               Return to Entrance

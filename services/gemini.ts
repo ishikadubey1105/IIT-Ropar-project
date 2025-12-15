@@ -88,6 +88,43 @@ export const getBookRecommendations = async (prefs: UserPreferences): Promise<Bo
   }
 };
 
+export const searchBooks = async (query: string): Promise<Book[]> => {
+  if (!apiKey) throw new Error("Secure API Key configuration missing.");
+  const model = "gemini-2.5-flash";
+  const sanitizedQuery = sanitizeInput(query);
+  
+  const prompt = `
+    Act as an expert librarian.
+    User Query: "${sanitizedQuery}"
+    
+    Instructions:
+    1. Search for books that match the user's query (title, author, or topic).
+    2. Recommend 4 relevant books.
+    3. Ensure the output matches the required JSON schema strictly.
+    4. For 'reasoning', explain why it matches the query.
+    5. For 'moodColor', pick a color that fits the book's cover or vibe.
+    6. For 'excerpt', generate a compelling teaser.
+  `;
+
+  try {
+    const response = await callWithRetry(async () => {
+      return await ai.models.generateContent({
+        model,
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: { type: Type.ARRAY, items: bookSchema },
+          systemInstruction: "You are Atmosphera, a secure and sophisticated AI book curator.",
+        }
+      });
+    });
+    return JSON.parse(response.text || "[]") as Book[];
+  } catch (error) {
+    console.error("Backend Error [Search]:", error);
+    throw new Error("Unable to search books.");
+  }
+};
+
 // --- GOOGLE SEARCH GROUNDING ---
 
 export const fetchBookDetails = async (bookTitle: string, author: string): Promise<{ summary: string; sources: WebSource[] }> => {
