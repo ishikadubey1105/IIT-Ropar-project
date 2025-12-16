@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Book } from '../types';
 import { getActiveRead } from '../services/storage';
 import { BookCover } from './BookCover';
@@ -14,6 +14,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onHome, onWishlist, onSearch, cl
   const [isScrolled, setIsScrolled] = useState(false);
   const [search, setSearch] = useState('');
   const [activeRead, setActiveRead] = useState<Book | null>(null);
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<any>(null);
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
@@ -35,6 +37,41 @@ export const Navbar: React.FC<NavbarProps> = ({ onHome, onWishlist, onSearch, cl
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSearch(search);
+  };
+
+  const handleVoiceSearch = () => {
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+      return;
+    }
+
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      alert("Voice search is not supported in this browser.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = () => setIsListening(true);
+    recognition.onend = () => setIsListening(false);
+    recognition.onerror = (event: any) => {
+      console.error("Speech recognition error", event.error);
+      setIsListening(false);
+    };
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      setSearch(transcript);
+      onSearch(transcript);
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
   };
 
   return (
@@ -75,15 +112,27 @@ export const Navbar: React.FC<NavbarProps> = ({ onHome, onWishlist, onSearch, cl
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="relative group">
+        <form onSubmit={handleSubmit} className="relative group flex items-center">
           <input 
             type="text" 
             placeholder="Search..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="bg-black/40 border border-slate-600 rounded-full px-5 py-2.5 w-32 md:w-48 focus:w-64 transition-all duration-300 text-sm text-white focus:outline-none focus:border-accent-gold shadow-inner"
+            className="bg-black/40 border border-slate-600 rounded-full pl-5 pr-12 py-2.5 w-32 md:w-48 focus:w-64 transition-all duration-300 text-sm text-white focus:outline-none focus:border-accent-gold shadow-inner placeholder-slate-500"
           />
-          <svg className="w-5 h-5 text-slate-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+          
+          <button
+            type="button"
+            onClick={handleVoiceSearch}
+            className={`absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full hover:bg-white/10 transition-colors ${isListening ? 'text-red-500 animate-pulse' : 'text-slate-400 hover:text-accent-gold'}`}
+            title="Search by voice"
+          >
+            {isListening ? (
+               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
+            ) : (
+               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
+            )}
+          </button>
         </form>
         
         <div className="w-10 h-10 rounded-full bg-accent-gold text-black font-serif font-bold text-lg flex items-center justify-center shadow-lg hover:bg-white transition-colors cursor-pointer">

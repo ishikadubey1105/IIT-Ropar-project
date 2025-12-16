@@ -106,9 +106,16 @@ export const BookCard: React.FC<BookCardProps> = ({ book, index }) => {
       
       <div className="p-6 md:p-8 flex flex-col h-full">
         <div className="mb-6 flex justify-between items-start">
-          <span className="text-xs uppercase tracking-widest font-bold text-accent-gold bg-accent-gold/10 border border-accent-gold/20 px-3 py-1 rounded-full backdrop-blur-md mt-1">
-            {book.genre}
-          </span>
+          <div className="flex gap-2 items-center">
+            <span className="text-xs uppercase tracking-widest font-bold text-accent-gold bg-accent-gold/10 border border-accent-gold/20 px-3 py-1 rounded-full backdrop-blur-md">
+              {book.genre}
+            </span>
+            {book.audiobookUrl && (
+              <span className="text-xs uppercase tracking-widest font-bold text-slate-300 bg-slate-800/50 border border-slate-700 px-2 py-1 rounded-full backdrop-blur-md" title="Audiobook Available">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
+              </span>
+            )}
+          </div>
           <div className="flex gap-2">
             <button
               onClick={handleShare}
@@ -185,14 +192,21 @@ export const BookCard: React.FC<BookCardProps> = ({ book, index }) => {
                 <h3 className="text-2xl font-serif font-bold text-white mb-2 group-hover:text-accent-gold transition-colors leading-tight">
                 {book.title}
                 </h3>
-                <p className="text-sm font-medium text-slate-400 italic flex flex-wrap items-center gap-2">
+                <div className="text-sm font-medium text-slate-400 italic flex flex-col gap-1">
                   <span>by {book.author}</span>
-                  {book.language && (
-                     <span className="not-italic text-[10px] uppercase tracking-wider text-slate-500 border border-slate-700 px-2 py-0.5 rounded-full bg-black/20">
-                       {book.language}
-                     </span>
-                  )}
-                </p>
+                  <div className="flex flex-wrap gap-2 mt-1">
+                    {book.language && (
+                       <span className="not-italic text-[10px] uppercase tracking-wider text-slate-500 border border-slate-700 px-2 py-0.5 rounded-full bg-black/20">
+                         {book.language}
+                       </span>
+                    )}
+                    {book.narrator && (
+                       <span className="not-italic text-[10px] uppercase tracking-wider text-accent-gold border border-accent-gold/20 px-2 py-0.5 rounded-full bg-black/20">
+                         Narrated by {book.narrator}
+                       </span>
+                    )}
+                  </div>
+                </div>
             </div>
         </div>
 

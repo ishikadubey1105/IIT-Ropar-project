@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type, Schema, Modality, LiveServerMessage } from "@google/genai";
-import { UserPreferences, Book, WebSource } from "../types";
+import { UserPreferences, Book, WebSource, ReadingFormat } from "../types";
 
 const parseApiKey = (): string => {
     const key = process.env.API_KEY;
@@ -60,9 +60,12 @@ const bookSchema: Schema = {
     reasoning: { type: Type.STRING, description: "One short sentence on why it fits." },
     moodColor: { type: Type.STRING, description: "Hex color code matching the book's vibe." },
     excerpt: { type: Type.STRING, description: "A very short, atmospheric teaser sentence." },
-    ebookUrl: { type: Type.STRING, description: "A link to the E-Book (Project Gutenberg, OpenLibrary, or Google Books). If not free, provide a Google Books/Amazon link." },
+    ebookUrl: { type: Type.STRING, description: "A link to the E-Book (Project Gutenberg, Google Books)." },
     moviePairing: { type: Type.STRING, description: "A movie or visual media recommendation that matches the book's specific mood and aesthetic." },
-    language: { type: Type.STRING, description: "The primary language of the book edition (e.g. 'English', 'Spanish')." }
+    language: { type: Type.STRING, description: "The primary language of the book edition (e.g. 'English', 'Spanish')." },
+    narrator: { type: Type.STRING, description: "Name of the audiobook narrator if applicable/famous." },
+    duration: { type: Type.STRING, description: "Approximate audiobook duration (e.g. '10h 30m')." },
+    audiobookUrl: { type: Type.STRING, description: "Link to Audible/LibriVox/Google Audiobooks." }
   },
   required: ["title", "author", "isbn", "reasoning", "moodColor", "genre", "description", "excerpt", "moviePairing", "language"],
 };
@@ -72,6 +75,8 @@ export const getBookRecommendations = async (prefs: UserPreferences): Promise<Bo
   const model = "gemini-2.5-flash";
   const sanitizedInterest = sanitizeInput(prefs.specificInterest || "Surprise me");
   
+  const isAudioPreferred = prefs.format === ReadingFormat.AUDIO;
+
   const prompt = `
     Recommend 4 atmospheric books in ${prefs.language || 'English'} specifically curated for the '${prefs.age}' age group.
     
@@ -82,6 +87,7 @@ export const getBookRecommendations = async (prefs: UserPreferences): Promise<Bo
     - Pace: ${prefs.pace}
     - Setting: ${prefs.setting}
     - Interest: ${sanitizedInterest}
+    - Preferred Format: ${prefs.format}
     
     AGE GROUP GUIDELINES:
     - 'child' (Under 12): Recommend Middle Grade or high-quality Children's Literature. Whimsical, safe, imaginative.
@@ -91,12 +97,17 @@ export const getBookRecommendations = async (prefs: UserPreferences): Promise<Bo
     - 'mature' (40+): Recommend literary fiction, classics, or sophisticated genre fiction with depth.
 
     CRITICAL INSTRUCTIONS:
-    1. **Markov Chain Genre Switching**: Do NOT recommend 4 books of the exact same genre. Simulate a Markov chain where the genre shifts slightly between recommendations to keep engagement high (e.g., Fantasy -> Magical Realism -> Historical Fiction).
+    1. **Markov Chain Genre Switching**: Do NOT recommend 4 books of the exact same genre. Simulate a Markov chain where the genre shifts slightly between recommendations.
     2. **Aesthetics**: Infer a dominant "Mood Color" and "Movie Pairing" for each book based on the User Context provided.
     3. **Safety**: If Age Group is 'child' or 'teen', strictly exclude adult themes/erotica.
     4. Return VALID JSON matching the schema.
     5. ISBN MUST be for a widely available PAPERBACK edition (ISBN-13 preferred).
-    6. Include a valid 'ebookUrl' for each book (prioritize free sources like Project Gutenberg if public domain).
+    
+    AUDIOBOOK SPECIFICS:
+    ${isAudioPreferred 
+      ? "Since the user prefers AUDIOBOOKS, prioritize books known for excellent narration (e.g., full cast, famous actors, award-winning narrators). Ensure 'narrator', 'duration', and 'audiobookUrl' are populated." 
+      : "If an excellent audiobook version exists, populate the 'narrator' and 'audiobookUrl' fields, but prioritize the text content match."
+    }
   `;
 
   try {
@@ -129,7 +140,7 @@ export const searchBooks = async (query: string): Promise<Book[]> => {
     CRITICAL INSTRUCTIONS:
     1. Return VALID JSON.
     2. Provide ACCURATE ISBN-13s.
-    3. Include 'ebookUrl' where possible.
+    3. Include 'ebookUrl' and 'audiobookUrl' where possible.
     4. Include a 'moviePairing' based on the book's vibe.
   `;
 
@@ -157,7 +168,7 @@ export const getTrendingBooks = async (): Promise<Book[]> => {
   
   const prompt = `
     Recommend 10 trending/classic books. Distinct genres.
-    CRITICAL: Provide ACCURATE ISBN-13s. Include ebookUrl if available. Include moviePairing.
+    CRITICAL: Provide ACCURATE ISBN-13s. Include ebookUrl and audiobookUrl if available.
   `;
 
   try {

@@ -13,6 +13,11 @@ export interface Book {
   ebookUrl?: string; // Link to the e-book if available
   moviePairing?: string; // Media recommendation based on color/vibe
   language?: string; // Added language support
+  
+  // Audio specific
+  narrator?: string;
+  duration?: string;
+  audiobookUrl?: string;
 }
 
 export interface WebSource {
@@ -61,6 +66,12 @@ export enum WorldSetting {
   SURPRISE = 'Surprise Me'
 }
 
+export enum ReadingFormat {
+  TEXT = 'Text (Physical/E-book)',
+  AUDIO = 'Audiobook',
+  ANY = 'Any Format'
+}
+
 export interface UserPreferences {
   age: string;
   weather: WeatherType | null;
@@ -69,6 +80,7 @@ export interface UserPreferences {
   setting: WorldSetting | null;
   language: string;
   specificInterest: string;
+  format: ReadingFormat;
 }
 
 export interface StepProps {

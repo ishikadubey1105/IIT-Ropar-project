@@ -101,39 +101,49 @@ export const BookDetailModal: React.FC<BookDetailModalProps> = ({ book, onClose,
         <div className="p-6 md:p-12 md:pt-24 grid grid-cols-1 lg:grid-cols-3 gap-12">
           <div className="lg:col-span-2 space-y-10">
             {/* Buttons Row - Fixed Overlap */}
-            <div className="flex flex-col sm:flex-row gap-4 pt-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4">
               <button 
                 onClick={handleStartReading}
-                className="flex-1 bg-white text-black font-bold py-4 rounded-xl hover:bg-slate-200 transition-all flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(255,255,255,0.15)] text-lg hover:-translate-y-1 active:scale-95"
+                className="bg-white text-black font-bold py-4 rounded-xl hover:bg-slate-200 transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(255,255,255,0.15)] text-sm md:text-base hover:-translate-y-1 active:scale-95"
               >
-                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                Mark as Reading
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                Reading
               </button>
               
-              {book.ebookUrl && (
+              {book.audiobookUrl ? (
+                <a 
+                  href={book.audiobookUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="bg-purple-600 text-white font-bold py-4 rounded-xl hover:bg-purple-500 transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(147,51,234,0.3)] text-sm md:text-base hover:-translate-y-1 active:scale-95"
+                >
+                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
+                   Listen
+                </a>
+              ) : (
                 <a 
                   href={book.ebookUrl} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="flex-1 bg-accent-gold text-deep-bg font-bold py-4 rounded-xl hover:bg-yellow-500 transition-all flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(212,175,55,0.3)] text-lg hover:-translate-y-1 active:scale-95"
+                  className={`bg-accent-gold text-deep-bg font-bold py-4 rounded-xl hover:bg-yellow-500 transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(212,175,55,0.3)] text-sm md:text-base hover:-translate-y-1 active:scale-95 ${!book.ebookUrl ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}
                 >
-                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
-                   Get E-Book
+                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+                   Read
                 </a>
               )}
 
               <button 
                 onClick={() => onToggleWishlist(book)}
-                className="flex-1 border-2 border-slate-600 text-slate-200 font-bold py-4 rounded-xl hover:border-white hover:text-white transition-all flex items-center justify-center gap-3 text-lg hover:-translate-y-1 active:scale-95"
+                className="border-2 border-slate-600 text-slate-200 font-bold py-4 rounded-xl hover:border-white hover:text-white transition-all flex items-center justify-center gap-2 text-sm md:text-base hover:-translate-y-1 active:scale-95"
               >
                  {isInWishlist ? (
                    <>
-                     <svg className="w-6 h-6 text-red-500" fill="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" /></svg>
+                     <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" /></svg>
                      Saved
                    </>
                  ) : (
                    <>
-                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                      Wishlist
                    </>
                  )}
@@ -141,16 +151,16 @@ export const BookDetailModal: React.FC<BookDetailModalProps> = ({ book, onClose,
 
               <button 
                 onClick={handleShare}
-                className={`flex-1 border-2 border-slate-600 text-slate-200 font-bold py-4 rounded-xl hover:border-blue-400 hover:text-blue-400 transition-all flex items-center justify-center gap-3 text-lg hover:-translate-y-1 active:scale-95 ${isShared ? 'border-emerald-500 text-emerald-500' : ''}`}
+                className={`border-2 border-slate-600 text-slate-200 font-bold py-4 rounded-xl hover:border-blue-400 hover:text-blue-400 transition-all flex items-center justify-center gap-2 text-sm md:text-base hover:-translate-y-1 active:scale-95 ${isShared ? 'border-emerald-500 text-emerald-500' : ''}`}
               >
                  {isShared ? (
                    <>
-                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
                      Copied
                    </>
                  ) : (
                    <>
-                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
+                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
                      Share
                    </>
                  )}
@@ -224,6 +234,24 @@ export const BookDetailModal: React.FC<BookDetailModalProps> = ({ book, onClose,
                   </div>
                </div>
             </div>
+
+            {book.narrator && (
+              <div className="bg-gradient-to-br from-purple-900/20 to-black p-6 rounded-xl border border-purple-500/20">
+                 <div className="flex items-center gap-3 mb-4">
+                   <div className="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center">
+                     <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
+                   </div>
+                   <h4 className="text-purple-300 text-sm font-bold uppercase tracking-widest">Audio Details</h4>
+                 </div>
+                 <div className="space-y-2">
+                    <p className="text-sm text-slate-400 uppercase tracking-wider">Narrated by</p>
+                    <p className="text-lg text-white font-serif">{book.narrator}</p>
+                    {book.duration && (
+                      <p className="text-xs text-purple-400 mt-2">Duration: {book.duration}</p>
+                    )}
+                 </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
