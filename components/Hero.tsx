@@ -44,6 +44,17 @@ export const Hero: React.FC<HeroProps> = ({ onStart, onBrowse }) => {
           </Button>
         </div>
       </div>
+
+      {/* Downward Scroll Indicator */}
+      <div 
+        className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-20 cursor-pointer flex flex-col items-center gap-2 opacity-70 hover:opacity-100 transition-opacity"
+        onClick={onBrowse}
+      >
+        <span className="text-[10px] uppercase tracking-[0.2em] text-slate-300 font-medium">Discover</span>
+        <div className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center animate-bounce bg-black/20 backdrop-blur-sm">
+           <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>
+        </div>
+      </div>
     </div>
   );
 };

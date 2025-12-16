@@ -12,6 +12,8 @@ export interface Book {
   excerpt: string;
   ebookUrl?: string; // Link to the e-book if available
   moviePairing?: string; // Media recommendation based on color/vibe
+  musicPairing?: string; // Musical recommendation
+  foodPairing?: string; // Food/Drink recommendation
   language?: string; // Added language support
   coverUrl?: string; // Direct link to cover image for optimization
   
@@ -33,6 +35,17 @@ export interface Book {
   accessViewStatus?: string; // 'FULL_PUBLIC_DOMAIN', 'SAMPLE', etc.
   pdfAvailable?: boolean;
   epubAvailable?: boolean;
+}
+
+export interface ChatMessage {
+  role: 'user' | 'model';
+  text: string;
+}
+
+export interface CharacterPersona {
+  name: string;
+  greeting: string;
+  systemInstruction: string;
 }
 
 export interface WebSource {

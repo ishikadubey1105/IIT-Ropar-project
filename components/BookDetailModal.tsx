@@ -3,6 +3,7 @@ import { Book } from '../types';
 import { MoodVisualizer } from './MoodVisualizer';
 import { setActiveRead } from '../services/storage';
 import { BookCover } from './BookCover';
+import { CharacterChat } from './CharacterChat';
 
 interface BookDetailModalProps {
   book: Book | null;
@@ -13,6 +14,7 @@ interface BookDetailModalProps {
 
 export const BookDetailModal: React.FC<BookDetailModalProps> = ({ book, onClose, onToggleWishlist, isInWishlist }) => {
   const [isShared, setIsShared] = useState(false);
+  const [activeTab, setActiveTab] = useState<'details' | 'chat'>('details');
 
   if (!book) return null;
 
@@ -100,167 +102,234 @@ export const BookDetailModal: React.FC<BookDetailModalProps> = ({ book, onClose,
            </div>
         </div>
 
-        <div className="p-6 md:p-12 md:pt-24 grid grid-cols-1 lg:grid-cols-3 gap-12">
+        {/* Navigation Tabs */}
+        <div className="flex items-center gap-8 px-6 md:px-12 border-b border-white/10 sticky top-0 bg-[#0a0a0c]/95 z-40 backdrop-blur-xl">
+             <button 
+                onClick={() => setActiveTab('details')}
+                className={`py-4 text-sm font-bold uppercase tracking-widest transition-colors relative ${activeTab === 'details' ? 'text-white' : 'text-slate-500 hover:text-slate-300'}`}
+             >
+                The Book
+                {activeTab === 'details' && <span className="absolute bottom-0 left-0 w-full h-1 bg-accent-gold rounded-t-full"></span>}
+             </button>
+             <button 
+                onClick={() => setActiveTab('chat')}
+                className={`py-4 text-sm font-bold uppercase tracking-widest transition-colors relative flex items-center gap-2 ${activeTab === 'chat' ? 'text-white' : 'text-slate-500 hover:text-slate-300'}`}
+             >
+                <span className="w-2 h-2 rounded-full bg-accent-gold animate-pulse"></span>
+                Echoes (Chat)
+                {activeTab === 'chat' && <span className="absolute bottom-0 left-0 w-full h-1 bg-accent-gold rounded-t-full"></span>}
+             </button>
+        </div>
+
+        <div className="p-6 md:p-12 grid grid-cols-1 lg:grid-cols-3 gap-12">
+          
+          {/* Main Content Area */}
           <div className="lg:col-span-2 space-y-10">
-            {/* Buttons Row */}
-            <div className="flex flex-col sm:flex-row gap-4 pt-4">
-              <button 
-                onClick={handleStartReading}
-                className="flex-1 bg-white text-black font-bold py-4 rounded-xl hover:bg-slate-200 transition-all flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(255,255,255,0.15)] text-lg hover:-translate-y-1 active:scale-95"
-              >
-                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                Mark as Reading
-              </button>
-              
-              {book.ebookUrl && (
-                <a 
-                  href={book.buyLink || book.ebookUrl} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="flex-1 bg-accent-gold text-deep-bg font-bold py-4 rounded-xl hover:bg-yellow-500 transition-all flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(212,175,55,0.3)] text-lg hover:-translate-y-1 active:scale-95"
+            {activeTab === 'details' ? (
+                <>
+                {/* Buttons Row */}
+                <div className="flex flex-col sm:flex-row gap-4 pt-4">
+                <button 
+                    onClick={handleStartReading}
+                    className="flex-1 bg-white text-black font-bold py-4 rounded-xl hover:bg-slate-200 transition-all flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(255,255,255,0.15)] text-lg hover:-translate-y-1 active:scale-95"
                 >
-                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
-                   {book.saleability === 'FREE' ? 'Read for Free' : 'Get E-Book'}
-                </a>
-              )}
+                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                    Mark as Reading
+                </button>
+                
+                {book.ebookUrl && (
+                    <a 
+                    href={book.buyLink || book.ebookUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex-1 bg-accent-gold text-deep-bg font-bold py-4 rounded-xl hover:bg-yellow-500 transition-all flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(212,175,55,0.3)] text-lg hover:-translate-y-1 active:scale-95"
+                    >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+                    {book.saleability === 'FREE' ? 'Read for Free' : 'Get E-Book'}
+                    </a>
+                )}
 
-              <button 
-                onClick={() => onToggleWishlist(book)}
-                className="flex-1 border-2 border-slate-600 text-slate-200 font-bold py-4 rounded-xl hover:border-white hover:text-white transition-all flex items-center justify-center gap-3 text-lg hover:-translate-y-1 active:scale-95"
-              >
-                 {isInWishlist ? (
-                   <>
-                     <svg className="w-6 h-6 text-red-500" fill="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" /></svg>
-                     Saved
-                   </>
-                 ) : (
-                   <>
-                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-                     Wishlist
-                   </>
-                 )}
-              </button>
+                <button 
+                    onClick={() => onToggleWishlist(book)}
+                    className="flex-1 border-2 border-slate-600 text-slate-200 font-bold py-4 rounded-xl hover:border-white hover:text-white transition-all flex items-center justify-center gap-3 text-lg hover:-translate-y-1 active:scale-95"
+                >
+                    {isInWishlist ? (
+                    <>
+                        <svg className="w-6 h-6 text-red-500" fill="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" /></svg>
+                        Saved
+                    </>
+                    ) : (
+                    <>
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                        Wishlist
+                    </>
+                    )}
+                </button>
 
-              <button 
-                onClick={handleShare}
-                className={`flex-1 border-2 border-slate-600 text-slate-200 font-bold py-4 rounded-xl hover:border-blue-400 hover:text-blue-400 transition-all flex items-center justify-center gap-3 text-lg hover:-translate-y-1 active:scale-95 ${isShared ? 'border-emerald-500 text-emerald-500' : ''}`}
-              >
-                 {isShared ? (
-                   <>
-                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                     Copied
-                   </>
-                 ) : (
-                   <>
-                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
-                     Share
-                   </>
-                 )}
-              </button>
-            </div>
-            
-            <div className="bg-white/5 p-8 rounded-2xl border-l-4 border-accent-gold backdrop-blur-sm">
-               <p className="text-xl md:text-2xl text-slate-200 leading-relaxed italic font-serif opacity-90">"{book.excerpt}"</p>
-            </div>
+                <button 
+                    onClick={handleShare}
+                    className={`flex-1 border-2 border-slate-600 text-slate-200 font-bold py-4 rounded-xl hover:border-blue-400 hover:text-blue-400 transition-all flex items-center justify-center gap-3 text-lg hover:-translate-y-1 active:scale-95 ${isShared ? 'border-emerald-500 text-emerald-500' : ''}`}
+                >
+                    {isShared ? (
+                    <>
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                        Copied
+                    </>
+                    ) : (
+                    <>
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
+                        Share
+                    </>
+                    )}
+                </button>
+                </div>
+                
+                <div className="bg-white/5 p-8 rounded-2xl border-l-4 border-accent-gold backdrop-blur-sm">
+                <p className="text-xl md:text-2xl text-slate-200 leading-relaxed italic font-serif opacity-90">"{book.excerpt}"</p>
+                </div>
 
-            {/* NEW METADATA GRID */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 py-6 border-t border-b border-white/10">
-              {book.publishedDate && (
-                <div className="space-y-1">
-                  <span className="text-xs text-slate-500 uppercase tracking-widest font-bold">Published</span>
-                  <p className="text-white font-medium">{book.publishedDate}</p>
+                {/* METADATA GRID */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6 py-6 border-t border-b border-white/10">
+                {book.publishedDate && (
+                    <div className="space-y-1">
+                    <span className="text-xs text-slate-500 uppercase tracking-widest font-bold">Published</span>
+                    <p className="text-white font-medium">{book.publishedDate}</p>
+                    </div>
+                )}
+                {book.publisher && (
+                    <div className="space-y-1">
+                    <span className="text-xs text-slate-500 uppercase tracking-widest font-bold">Publisher</span>
+                    <p className="text-white font-medium truncate" title={book.publisher}>{book.publisher}</p>
+                    </div>
+                )}
+                {book.pageCount && (
+                    <div className="space-y-1">
+                    <span className="text-xs text-slate-500 uppercase tracking-widest font-bold">Length</span>
+                    <p className="text-white font-medium">{book.pageCount} pages</p>
+                    </div>
+                )}
+                {book.averageRating && (
+                    <div className="space-y-1">
+                    <span className="text-xs text-slate-500 uppercase tracking-widest font-bold">Rating</span>
+                    <div className="flex items-center gap-1.5">
+                        <span className="text-accent-gold text-lg">★</span>
+                        <p className="text-white font-medium">{book.averageRating} <span className="text-slate-500 text-xs">({book.ratingsCount || 0})</span></p>
+                    </div>
+                    </div>
+                )}
                 </div>
-              )}
-              {book.publisher && (
-                <div className="space-y-1">
-                  <span className="text-xs text-slate-500 uppercase tracking-widest font-bold">Publisher</span>
-                  <p className="text-white font-medium truncate" title={book.publisher}>{book.publisher}</p>
+                
+                {/* E-Book Metadata Section */}
+                {(book.isEbook || book.saleability !== 'NOT_FOR_SALE') && (
+                <div className="mt-6 p-4 bg-gradient-to-r from-blue-900/20 to-purple-900/20 rounded-xl border border-blue-500/30">
+                    <div className="flex flex-wrap items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                            <div className="bg-blue-500/20 p-2 rounded-full text-blue-300">
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+                            </div>
+                            <div>
+                                <h5 className="text-white font-bold">Digital Edition</h5>
+                                <div className="flex gap-2 text-xs mt-1">
+                                    {book.epubAvailable && <span className="bg-green-500/20 text-green-300 px-2 py-0.5 rounded border border-green-500/30">ePub</span>}
+                                    {book.pdfAvailable && <span className="bg-red-500/20 text-red-300 px-2 py-0.5 rounded border border-red-500/30">PDF</span>}
+                                    {book.accessViewStatus === 'FULL_PUBLIC_DOMAIN' && <span className="bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded border border-amber-500/30">Public Domain</span>}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div className="text-right">
+                            {book.saleability === 'FREE' && <span className="text-2xl font-bold text-emerald-400">Free</span>}
+                            {book.price && (
+                                <div className="flex flex-col items-end">
+                                    <span className="text-slate-400 text-xs uppercase">Price</span>
+                                    <span className="text-2xl font-bold text-white">{book.price.amount} <span className="text-sm text-slate-400">{book.price.currencyCode}</span></span>
+                                </div>
+                            )}
+                            {(book.buyLink || book.ebookUrl) && (
+                                <a href={book.buyLink || book.ebookUrl} target="_blank" rel="noreferrer" className="text-xs text-accent-gold hover:underline block mt-1">
+                                    {book.saleability === 'FREE' ? 'Read Now' : 'Buy / Download'} &rarr;
+                                </a>
+                            )}
+                        </div>
+                    </div>
                 </div>
-              )}
-              {book.pageCount && (
-                <div className="space-y-1">
-                  <span className="text-xs text-slate-500 uppercase tracking-widest font-bold">Length</span>
-                  <p className="text-white font-medium">{book.pageCount} pages</p>
+                )}
+
+                <div className="space-y-4">
+                <h3 className="text-2xl font-bold text-white flex items-center gap-2">
+                    <span className="w-2 h-8 bg-accent-gold rounded-full"></span>
+                    Synopsis
+                </h3>
+                <p className="text-slate-300 leading-loose text-lg font-light tracking-wide">{book.description}</p>
                 </div>
-              )}
-              {book.averageRating && (
-                <div className="space-y-1">
-                   <span className="text-xs text-slate-500 uppercase tracking-widest font-bold">Rating</span>
-                   <div className="flex items-center gap-1.5">
-                     <span className="text-accent-gold text-lg">★</span>
-                     <p className="text-white font-medium">{book.averageRating} <span className="text-slate-500 text-xs">({book.ratingsCount || 0})</span></p>
-                   </div>
+                
+                {/* SENSORY PAIRINGS (New Unique Feature) */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {book.moviePairing && (
+                    <div className="bg-gradient-to-r from-[#1e1b4b] to-black rounded-xl p-6 border border-indigo-500/30 relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 p-4 opacity-20">
+                            <svg className="w-16 h-16" fill="currentColor" viewBox="0 0 24 24"><path d="M18 3v2h-2V3H8v2H6V3H4v18h2v-2h2v2h8v-2h2v2h2V3h-2zM8 17H6v-2h2v2zm0-4H6v-2h2v2zm0-4H6V7h2v2zm10 8h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V7h2v2z"/></svg>
+                        </div>
+                        <h4 className="text-indigo-300 text-xs font-bold uppercase mb-2 tracking-widest relative z-10">Atmospheric Media Pairing</h4>
+                        <div className="flex items-center gap-4 relative z-10">
+                            <div className="w-10 h-10 rounded-full bg-indigo-500/20 flex items-center justify-center shrink-0">
+                                <svg className="w-5 h-5 text-indigo-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" /></svg>
+                            </div>
+                            <p className="text-indigo-100 font-serif italic">{book.moviePairing}</p>
+                        </div>
+                    </div>
+                    )}
+
+                    {book.musicPairing && (
+                    <div className="bg-gradient-to-r from-emerald-900/40 to-black rounded-xl p-6 border border-emerald-500/30 relative overflow-hidden group">
+                         <div className="absolute top-0 right-0 p-4 opacity-20">
+                            <svg className="w-16 h-16" fill="currentColor" viewBox="0 0 24 24"><path d="M9 19V6l12-3v13M9 10l12-3" /></svg>
+                         </div>
+                        <h4 className="text-emerald-300 text-xs font-bold uppercase mb-2 tracking-widest relative z-10">Soundtrack Pairing</h4>
+                        <div className="flex items-center gap-4 relative z-10">
+                            <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0">
+                                <svg className="w-5 h-5 text-emerald-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 10l12-3" /></svg>
+                            </div>
+                            <p className="text-emerald-100 font-serif italic">{book.musicPairing}</p>
+                        </div>
+                    </div>
+                    )}
+                    
+                    {book.foodPairing && (
+                     <div className="md:col-span-2 bg-gradient-to-r from-orange-900/40 to-black rounded-xl p-6 border border-orange-500/30 relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 p-4 opacity-20">
+                             <svg className="w-16 h-16" fill="currentColor" viewBox="0 0 24 24"><path d="M3 3h18v18H3V3m2 2v14h14V5H5m4 2h6v2H9V7m0 4h6v2H9v-2m0 4h6v2H9v-2z" /></svg>
+                        </div>
+                        <h4 className="text-orange-300 text-xs font-bold uppercase mb-2 tracking-widest relative z-10">Taste & Scent Pairing</h4>
+                        <div className="flex items-center gap-4 relative z-10">
+                             <div className="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center shrink-0">
+                                 <svg className="w-5 h-5 text-orange-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                             </div>
+                             <p className="text-orange-100 font-serif italic">{book.foodPairing}</p>
+                        </div>
+                     </div>
+                    )}
                 </div>
-              )}
-            </div>
-            
-            {/* E-Book Metadata Section */}
-            {(book.isEbook || book.saleability !== 'NOT_FOR_SALE') && (
-              <div className="mt-6 p-4 bg-gradient-to-r from-blue-900/20 to-purple-900/20 rounded-xl border border-blue-500/30">
-                  <div className="flex flex-wrap items-center justify-between gap-4">
-                      <div className="flex items-center gap-3">
-                          <div className="bg-blue-500/20 p-2 rounded-full text-blue-300">
-                              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
-                          </div>
-                          <div>
-                              <h5 className="text-white font-bold">Digital Edition</h5>
-                              <div className="flex gap-2 text-xs mt-1">
-                                  {book.epubAvailable && <span className="bg-green-500/20 text-green-300 px-2 py-0.5 rounded border border-green-500/30">ePub</span>}
-                                  {book.pdfAvailable && <span className="bg-red-500/20 text-red-300 px-2 py-0.5 rounded border border-red-500/30">PDF</span>}
-                                  {book.accessViewStatus === 'FULL_PUBLIC_DOMAIN' && <span className="bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded border border-amber-500/30">Public Domain</span>}
-                              </div>
-                          </div>
-                      </div>
-                      
-                      <div className="text-right">
-                          {book.saleability === 'FREE' && <span className="text-2xl font-bold text-emerald-400">Free</span>}
-                          {book.price && (
-                              <div className="flex flex-col items-end">
-                                  <span className="text-slate-400 text-xs uppercase">Price</span>
-                                  <span className="text-2xl font-bold text-white">{book.price.amount} <span className="text-sm text-slate-400">{book.price.currencyCode}</span></span>
-                              </div>
-                          )}
-                          {(book.buyLink || book.ebookUrl) && (
-                              <a href={book.buyLink || book.ebookUrl} target="_blank" rel="noreferrer" className="text-xs text-accent-gold hover:underline block mt-1">
-                                 {book.saleability === 'FREE' ? 'Read Now' : 'Buy / Download'} &rarr;
-                              </a>
-                          )}
-                      </div>
-                  </div>
-              </div>
+
+                <div className="bg-gradient-to-br from-white/10 to-transparent rounded-xl p-6 border border-white/10 shadow-inner">
+                <h4 className="text-accent-gold text-xs font-bold uppercase mb-3 tracking-widest">Why it fits your vibe</h4>
+                <p className="text-slate-200 text-lg leading-relaxed">{book.reasoning}</p>
+                </div>
+                </>
+            ) : (
+                <div className="animate-fade-in">
+                    <div className="bg-gradient-to-r from-accent-gold/20 to-transparent p-6 rounded-xl border border-accent-gold/30 mb-8 flex items-center gap-4">
+                        <div className="p-3 bg-black rounded-full text-accent-gold">
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" /></svg>
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-bold text-white">Echoes: Speak to the Character</h3>
+                            <p className="text-sm text-slate-300">Interact with the soul of this book before you read it.</p>
+                        </div>
+                    </div>
+                    <CharacterChat bookTitle={book.title} author={book.author} onClose={() => setActiveTab('details')} />
+                </div>
             )}
-
-            <div className="space-y-4">
-               <h3 className="text-2xl font-bold text-white flex items-center gap-2">
-                 <span className="w-2 h-8 bg-accent-gold rounded-full"></span>
-                 Synopsis
-               </h3>
-               <p className="text-slate-300 leading-loose text-lg font-light tracking-wide">{book.description}</p>
-            </div>
-            
-            {/* Movie Pairing Section */}
-            {book.moviePairing && (
-              <div className="bg-gradient-to-r from-[#1e1b4b] to-black rounded-xl p-6 border border-indigo-500/30 relative overflow-hidden group">
-                 <div className="absolute top-0 right-0 p-4 opacity-20">
-                    <svg className="w-20 h-20" fill="currentColor" viewBox="0 0 24 24"><path d="M18 3v2h-2V3H8v2H6V3H4v18h2v-2h2v2h8v-2h2v2h2V3h-2zM8 17H6v-2h2v2zm0-4H6v-2h2v2zm0-4H6V7h2v2zm10 8h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V7h2v2z"/></svg>
-                 </div>
-                 <h4 className="text-indigo-300 text-xs font-bold uppercase mb-2 tracking-widest relative z-10">Atmospheric Media Pairing</h4>
-                 <div className="flex items-center gap-4 relative z-10">
-                   <div className="w-12 h-12 rounded-full bg-indigo-500/20 flex items-center justify-center shrink-0">
-                     <svg className="w-6 h-6 text-indigo-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" /></svg>
-                   </div>
-                   <div>
-                     <p className="text-white text-lg font-medium">If you like this, watch:</p>
-                     <p className="text-indigo-200 text-xl font-serif italic">{book.moviePairing}</p>
-                   </div>
-                 </div>
-              </div>
-            )}
-
-            <div className="bg-gradient-to-br from-white/10 to-transparent rounded-xl p-6 border border-white/10 shadow-inner">
-               <h4 className="text-accent-gold text-xs font-bold uppercase mb-3 tracking-widest">Why it fits your vibe</h4>
-               <p className="text-slate-200 text-lg leading-relaxed">{book.reasoning}</p>
-            </div>
           </div>
 
           <div className="lg:col-span-1 space-y-8">
@@ -294,6 +363,19 @@ export const BookDetailModal: React.FC<BookDetailModalProps> = ({ book, onClose,
                   </div>
                </div>
             </div>
+            
+            {activeTab === 'details' && (
+                <div 
+                   onClick={() => setActiveTab('chat')}
+                   className="p-6 rounded-xl border border-dashed border-slate-700 hover:border-accent-gold hover:bg-white/5 transition-all cursor-pointer group text-center"
+                >
+                    <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+                        <svg className="w-6 h-6 text-slate-300 group-hover:text-accent-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                    </div>
+                    <h4 className="text-white font-bold mb-1">Have a Question?</h4>
+                    <p className="text-xs text-slate-400">Ask the main character directly.</p>
+                </div>
+            )}
           </div>
         </div>
       </div>

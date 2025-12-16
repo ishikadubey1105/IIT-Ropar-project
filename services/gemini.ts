@@ -1,5 +1,5 @@
-import { GoogleGenAI, Type, Schema, Modality, LiveServerMessage } from "@google/genai";
-import { UserPreferences, Book, WebSource } from "../types";
+import { GoogleGenAI, Type, Schema, Modality, LiveServerMessage, Chat } from "@google/genai";
+import { UserPreferences, Book, WebSource, CharacterPersona } from "../types";
 
 const parseApiKey = (): string => {
     const key = process.env.API_KEY;
@@ -85,9 +85,11 @@ const bookSchema: Schema = {
     excerpt: { type: Type.STRING, description: "A very short, atmospheric teaser sentence." },
     ebookUrl: { type: Type.STRING, description: "A link to the E-Book (Project Gutenberg, OpenLibrary, or Google Books). If not free, provide a Google Books/Amazon link." },
     moviePairing: { type: Type.STRING, description: "A movie or visual media recommendation that matches the book's specific mood and aesthetic." },
+    musicPairing: { type: Type.STRING, description: "A specific song, album, or genre that perfectly scores the reading experience." },
+    foodPairing: { type: Type.STRING, description: "A food or drink item that pairs with the book's setting or vibe." },
     language: { type: Type.STRING, description: "The primary language of the book edition (e.g. 'English', 'Spanish')." }
   },
-  required: ["title", "author", "isbn", "reasoning", "moodColor", "genre", "description", "excerpt", "moviePairing", "language"],
+  required: ["title", "author", "isbn", "reasoning", "moodColor", "genre", "description", "excerpt", "moviePairing", "musicPairing", "foodPairing", "language"],
 };
 
 export const getBookRecommendations = async (prefs: UserPreferences): Promise<Book[]> => {
@@ -163,6 +165,8 @@ const mapGoogleBook = (item: any): Book => {
         excerpt: info.searchInfo?.textSnippet || info.description?.substring(0, 100) || "Click to explore this title...",
         language: info.language,
         moviePairing: "Ask the Librarian",
+        musicPairing: "Ambient Noise", // Default for non-curated books
+        foodPairing: "Tea", // Default for non-curated books
         ebookUrl: info.previewLink || info.infoLink,
         coverUrl: thumb,
         
@@ -204,7 +208,7 @@ export const searchBooks = async (query: string): Promise<Book[]> => {
 };
 
 // DISCOVERY ENGINE: ACCESS 10M+ BOOKS
-export const getTrendingBooks = async (context?: string): Promise<Book[]> => {
+export const getTrendingBooks = async (context?: string, orderByNewest: boolean = false): Promise<Book[]> => {
   try {
     let query = '';
     
@@ -218,11 +222,14 @@ export const getTrendingBooks = async (context?: string): Promise<Book[]> => {
         console.log(`Discovering books in genre: ${randomSubject}`);
     }
 
-    // Randomize 'startIndex' to dig deeper into the 10M+ dataset (0-100 random offset)
-    const startIndex = Math.floor(Math.random() * 40);
+    // When sorting by newest, we don't want to skip the actual new items with a random offset.
+    const maxOffset = orderByNewest ? 0 : 40;
+    const startIndex = Math.floor(Math.random() * (maxOffset + 1));
+
+    const sortParam = orderByNewest ? '&orderBy=newest' : '';
 
     // Query Google Books API
-    const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&startIndex=${startIndex}&maxResults=20&printType=books&langRestrict=en`);
+    const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&startIndex=${startIndex}&maxResults=20&printType=books&langRestrict=en${sortParam}`);
     const data = await res.json();
 
     if (!data.items || data.items.length === 0) {
@@ -232,7 +239,8 @@ export const getTrendingBooks = async (context?: string): Promise<Book[]> => {
 
     // Map and Shuffle
     const books = data.items.map(mapGoogleBook);
-    return books.sort(() => Math.random() - 0.5);
+    // Only shuffle if NOT sorting by newest (to keep chronological order)
+    return orderByNewest ? books : books.sort(() => Math.random() - 0.5);
 
   } catch (error) {
     console.warn("Discovery Engine unreachable, using local archive.", error);
@@ -270,6 +278,46 @@ export const fetchBookDetails = async (bookTitle: string, author: string): Promi
     console.error("Search Grounding Error:", error);
     return { summary: "Could not fetch real-time info.", sources: [] };
   }
+};
+
+// --- PERSONA CHAT ---
+
+export const getCharacterPersona = async (bookTitle: string, author: string): Promise<CharacterPersona> => {
+    if (!apiKey) throw new Error("API Key missing");
+    
+    const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: `Identify the single most interesting character (or the author) to talk to from the book "${bookTitle}" by ${author}. 
+        Return a JSON object with: 
+        1. 'name': The character's name.
+        2. 'greeting': A short, in-character opening line to start a conversation.
+        3. 'systemInstruction': A instruction paragraph telling an AI how to roleplay this character perfectly (tone, vocabulary, knowledge limit).
+        `,
+        config: {
+            responseMimeType: "application/json",
+            responseSchema: {
+                type: Type.OBJECT,
+                properties: {
+                    name: { type: Type.STRING },
+                    greeting: { type: Type.STRING },
+                    systemInstruction: { type: Type.STRING }
+                },
+                required: ["name", "greeting", "systemInstruction"]
+            }
+        }
+    });
+
+    return parseJSON<CharacterPersona>(response.text);
+};
+
+export const createChatSession = (systemInstruction: string): Chat => {
+    if (!apiKey) throw new Error("API Key missing");
+    return ai.chats.create({
+        model: "gemini-2.5-flash",
+        config: {
+            systemInstruction: systemInstruction,
+        }
+    });
 };
 
 // --- IMAGE GENERATION & EDITING ---

@@ -16,6 +16,17 @@ function App() {
   // Data State
   const [trending, setTrending] = useState<Book[]>([]);
   const [trendingTitle, setTrendingTitle] = useState("Trending on Atmosphera");
+  
+  // Collections
+  const [newBooks, setNewBooks] = useState<Book[]>([]);
+  const [bestsellerBooks, setBestsellerBooks] = useState<Book[]>([]);
+  const [romanceBooks, setRomanceBooks] = useState<Book[]>([]);
+  const [thrillerBooks, setThrillerBooks] = useState<Book[]>([]);
+  const [gothicBooks, setGothicBooks] = useState<Book[]>([]);
+  const [scifiBooks, setScifiBooks] = useState<Book[]>([]);
+  const [classicBooks, setClassicBooks] = useState<Book[]>([]);
+  const [fantasyBooks, setFantasyBooks] = useState<Book[]>([]);
+
   const [wishlist, setWishlist] = useState<Book[]>([]);
   const [recommendations, setRecommendations] = useState<Book[]>([]);
   const [searchResults, setSearchResults] = useState<Book[]>([]);
@@ -29,7 +40,21 @@ function App() {
   // Initial Load & Scroll Listener
   useEffect(() => {
     setWishlist(getWishlist());
+    
+    // Fetch multiple categories
     getTrendingBooks().then(setTrending);
+    
+    // New Sections
+    getTrendingBooks("subject:fiction", true).then(setNewBooks); // New Releases
+    getTrendingBooks("bestsellers").then(setBestsellerBooks); 
+    getTrendingBooks("subject:romance").then(setRomanceBooks);
+    getTrendingBooks("subject:thriller").then(setThrillerBooks);
+
+    // Existing Sections
+    getTrendingBooks("subject:gothic").then(setGothicBooks);
+    getTrendingBooks("subject:science fiction").then(setScifiBooks);
+    getTrendingBooks("subject:fantasy").then(setFantasyBooks);
+    getTrendingBooks("subject:classics").then(setClassicBooks);
 
     const handleWishlistUpdate = () => setWishlist(getWishlist());
     window.addEventListener('wishlist-updated', handleWishlistUpdate);
@@ -223,6 +248,34 @@ function App() {
             </div>
 
             <BookRow title={trendingTitle} books={trending} onBookClick={handleBookClick} />
+
+            {/* NEW COLLECTIONS */}
+            {newBooks.length > 0 && (
+                <BookRow title="New Releases" books={newBooks} onBookClick={handleBookClick} />
+            )}
+            {bestsellerBooks.length > 0 && (
+                <BookRow title="Global Bestsellers" books={bestsellerBooks} onBookClick={handleBookClick} />
+            )}
+            {romanceBooks.length > 0 && (
+                <BookRow title="Romance & Heartbreak" books={romanceBooks} onBookClick={handleBookClick} />
+            )}
+            {thrillerBooks.length > 0 && (
+                <BookRow title="Thrillers & Mystery" books={thrillerBooks} onBookClick={handleBookClick} />
+            )}
+            
+            {/* EXISTING COLLECTIONS */}
+            {fantasyBooks.length > 0 && (
+                <BookRow title="Epic Fantasy" books={fantasyBooks} onBookClick={handleBookClick} />
+            )}
+            {gothicBooks.length > 0 && (
+                <BookRow title="Gothic & Eerie" books={gothicBooks} onBookClick={handleBookClick} />
+            )}
+            {scifiBooks.length > 0 && (
+                <BookRow title="Future Worlds" books={scifiBooks} onBookClick={handleBookClick} />
+            )}
+            {classicBooks.length > 0 && (
+                <BookRow title="Timeless Classics" books={classicBooks} onBookClick={handleBookClick} />
+            )}
 
             <div className="mt-20 border-t border-white/10 pt-10 text-center text-slate-500 text-sm pb-10 bg-black/40 backdrop-blur-sm">
               <p>Powered by Google Gemini 2.5 • Flash, Pro & Imagen</p>
