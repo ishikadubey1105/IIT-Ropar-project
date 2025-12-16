@@ -15,6 +15,7 @@ function App() {
   
   // Data State
   const [trending, setTrending] = useState<Book[]>([]);
+  const [trendingTitle, setTrendingTitle] = useState("Trending on Atmosphera");
   const [wishlist, setWishlist] = useState<Book[]>([]);
   const [recommendations, setRecommendations] = useState<Book[]>([]);
   const [searchResults, setSearchResults] = useState<Book[]>([]);
@@ -23,6 +24,7 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [recTitle, setRecTitle] = useState("Just For You");
   const [scrollY, setScrollY] = useState(0);
+  const [hasSearched, setHasSearched] = useState(false);
 
   // Initial Load & Scroll Listener
   useEffect(() => {
@@ -73,17 +75,32 @@ function App() {
     if (!query.trim()) return;
     setLoading(true);
     setError(null);
+    setHasSearched(true);
+    setSearchResults([]); // Clear previous results immediately
+
+    // 1. Fire Fast Search (Google Books API)
     try {
       const books = await searchBooks(query);
       setSearchResults(books);
+      setLoading(false); 
+      
+      // Auto-scroll to results
       setTimeout(() => {
         const el = document.getElementById('search-row');
         if(el) el.scrollIntoView({ behavior: 'smooth' });
       }, 100);
+
+      // 2. Fire Background Trending Update (Gemini AI)
+      getTrendingBooks(query).then(newTrends => {
+          if (newTrends && newTrends.length > 0) {
+             setTrending(newTrends);
+             setTrendingTitle(`Trending related to "${query}"`);
+          }
+      }).catch(err => console.warn("Background trending update failed", err));
+
     } catch (e: any) {
       console.error(e);
-      setError(e.message || "We couldn't find that book in the archives. Please check the spelling or try a different query.");
-    } finally {
+      setError("Could not find books. Please check your connection.");
       setLoading(false);
     }
   };
@@ -93,7 +110,6 @@ function App() {
   if (view === 'curate') {
     return (
       <div className="min-h-screen relative text-white flex flex-col items-center justify-center p-4">
-        {/* Background for Questionnaire */}
         <div className="fixed inset-0 z-0">
              <img 
                src="https://images.unsplash.com/photo-1481627834876-b7833e8f5570?q=80&w=2400&auto=format&fit=crop" 
@@ -118,7 +134,6 @@ function App() {
 
   return (
     <div className="min-h-screen text-white font-sans overflow-x-hidden relative">
-      {/* GLOBAL FIXED BACKGROUND WITH PARALLAX */}
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
         <img 
           src="https://images.unsplash.com/photo-1481627834876-b7833e8f5570?q=80&w=2400&auto=format&fit=crop" 
@@ -129,7 +144,6 @@ function App() {
             filter: `brightness(${Math.max(0.4, 1 - scrollY * 0.001)}) blur(${Math.min(scrollY * 0.005, 3)}px)`
           }}
         />
-        {/* Dark Overlay to ensure text readability without "blue" tint */}
         <div className="absolute inset-0 bg-black/80 mix-blend-multiply" />
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-90" />
       </div>
@@ -138,6 +152,11 @@ function App() {
         onHome={() => {
             setSearchResults([]);
             setError(null);
+            setHasSearched(false);
+            getTrendingBooks().then(books => {
+                setTrending(books);
+                setTrendingTitle("Trending on Atmosphera");
+            });
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }} 
         onWishlist={() => {
@@ -147,7 +166,6 @@ function App() {
         onSearch={handleSearch}
       />
 
-      {/* Main Content Container */}
       <div className="relative z-10">
         <Hero 
             onStart={() => {
@@ -162,7 +180,6 @@ function App() {
 
         <div className="pb-20 space-y-8" id="browse-start">
             
-            {/* Error Banner */}
             {error && (
               <div className="mx-6 md:mx-12 mt-8 p-4 bg-red-500/10 border border-red-500/50 rounded-lg flex items-center justify-between animate-fade-in backdrop-blur-md">
                 <div className="flex items-center gap-3">
@@ -176,16 +193,22 @@ function App() {
             )}
 
             {loading && (
-            <div className="flex items-center justify-center h-40">
+            <div className="flex flex-col items-center justify-center h-40 gap-4">
                 <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-accent-gold"></div>
+                <p className="text-slate-400 text-sm">Searching the archives...</p>
             </div>
             )}
 
-            {searchResults.length > 0 && (
             <div id="search-row">
+              {searchResults.length > 0 ? (
                 <BookRow title="Search Results" books={searchResults} onBookClick={handleBookClick} />
+              ) : hasSearched && !loading && !error && (
+                <div className="flex flex-col items-center justify-center py-12 text-slate-500">
+                    <svg className="w-16 h-16 mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+                    <p className="text-lg">No books found matching that query.</p>
+                </div>
+              )}
             </div>
-            )}
 
             {recommendations.length > 0 && (
             <div id="recommendations-row">
@@ -194,16 +217,13 @@ function App() {
             )}
 
             <div id="wishlist-row">
-            {wishlist.length > 0 ? (
+            {wishlist.length > 0 && (
                 <BookRow title="My List" books={wishlist} onBookClick={handleBookClick} />
-            ) : (
-                <div className="pl-12 mb-8 text-slate-500 text-sm hidden">Add books to your list to see them here.</div>
             )}
             </div>
 
-            <BookRow title="Trending on Atmosphera" books={trending} onBookClick={handleBookClick} />
+            <BookRow title={trendingTitle} books={trending} onBookClick={handleBookClick} />
 
-            {/* Footer */}
             <div className="mt-20 border-t border-white/10 pt-10 text-center text-slate-500 text-sm pb-10 bg-black/40 backdrop-blur-sm">
               <p>Powered by Google Gemini 2.5 • Flash, Pro & Imagen</p>
               <p className="mt-2">Atmosphera © 2025</p>
@@ -216,7 +236,7 @@ function App() {
         onClose={() => setSelectedBook(null)} 
         onToggleWishlist={(b) => {
             toggleWishlist(b);
-            setWishlist(getWishlist()); // force update
+            setWishlist(getWishlist());
         }}
         isInWishlist={selectedBook ? isInWishlist(selectedBook) : false}
       />

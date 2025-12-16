@@ -13,11 +13,26 @@ export interface Book {
   ebookUrl?: string; // Link to the e-book if available
   moviePairing?: string; // Media recommendation based on color/vibe
   language?: string; // Added language support
+  coverUrl?: string; // Direct link to cover image for optimization
   
-  // Audio specific
-  narrator?: string;
-  duration?: string;
-  audiobookUrl?: string;
+  // Extended Metadata from Global Archive
+  publisher?: string;
+  publishedDate?: string;
+  pageCount?: number;
+  averageRating?: number;
+  ratingsCount?: number;
+
+  // E-book Specific Metadata
+  isEbook?: boolean;
+  saleability?: string; // 'FOR_SALE', 'FREE', 'NOT_FOR_SALE'
+  price?: {
+    amount: number;
+    currencyCode: string;
+  };
+  buyLink?: string;
+  accessViewStatus?: string; // 'FULL_PUBLIC_DOMAIN', 'SAMPLE', etc.
+  pdfAvailable?: boolean;
+  epubAvailable?: boolean;
 }
 
 export interface WebSource {
@@ -66,12 +81,6 @@ export enum WorldSetting {
   SURPRISE = 'Surprise Me'
 }
 
-export enum ReadingFormat {
-  TEXT = 'Text (Physical/E-book)',
-  AUDIO = 'Audiobook',
-  ANY = 'Any Format'
-}
-
 export interface UserPreferences {
   age: string;
   weather: WeatherType | null;
@@ -80,7 +89,6 @@ export interface UserPreferences {
   setting: WorldSetting | null;
   language: string;
   specificInterest: string;
-  format: ReadingFormat;
 }
 
 export interface StepProps {

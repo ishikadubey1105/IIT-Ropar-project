@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { UserPreferences, WeatherType, MoodType, ReadingPace, WorldSetting, ReadingFormat, StepProps } from '../types';
+import { UserPreferences, WeatherType, MoodType, ReadingPace, WorldSetting, StepProps } from '../types';
 import { Button } from './Button';
 
 // Icons/SVGs
@@ -47,60 +47,6 @@ const LanguageStep: React.FC<StepProps> = ({ onNext, data }) => {
             <span className={`text-xs uppercase tracking-wider ${data.language === lang.code ? 'text-black/70' : 'text-slate-500 group-hover:text-slate-400'}`}>{lang.code}</span>
           </button>
         ))}
-      </div>
-    </div>
-  );
-};
-
-const FormatStep: React.FC<StepProps> = ({ onNext, onBack, data }) => {
-  return (
-    <div className="animate-fade-in space-y-8 pb-12">
-      <h2 className="text-3xl md:text-4xl font-serif text-center mb-2 leading-tight">How will you consume this story?</h2>
-      <p className="text-slate-400 text-center mb-8">Choose your preferred medium.</p>
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-        <button
-          onClick={() => onNext({ format: ReadingFormat.TEXT })}
-          className={`p-8 rounded-xl border transition-all duration-300 flex flex-col items-center justify-center gap-4 group hover:scale-105
-            ${data.format === ReadingFormat.TEXT 
-              ? 'bg-accent-gold text-deep-bg border-accent-gold shadow-lg' 
-              : 'bg-slate-800/50 border-slate-700 text-slate-300 hover:bg-slate-800 hover:border-slate-500'
-            }`}
-        >
-           <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
-           <span className="text-xl font-serif font-bold">Read with my Eyes</span>
-           <span className="text-xs opacity-70">Physical, Kindle, E-Book</span>
-        </button>
-
-        <button
-          onClick={() => onNext({ format: ReadingFormat.AUDIO })}
-          className={`p-8 rounded-xl border transition-all duration-300 flex flex-col items-center justify-center gap-4 group hover:scale-105
-            ${data.format === ReadingFormat.AUDIO 
-              ? 'bg-accent-gold text-deep-bg border-accent-gold shadow-lg' 
-              : 'bg-slate-800/50 border-slate-700 text-slate-300 hover:bg-slate-800 hover:border-slate-500'
-            }`}
-        >
-           <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
-           <span className="text-xl font-serif font-bold">Listen with my Ears</span>
-           <span className="text-xs opacity-70">Audiobooks & Dramas</span>
-        </button>
-
-        <button
-          onClick={() => onNext({ format: ReadingFormat.ANY })}
-          className={`p-8 rounded-xl border transition-all duration-300 flex flex-col items-center justify-center gap-4 group hover:scale-105
-            ${data.format === ReadingFormat.ANY 
-              ? 'bg-accent-gold text-deep-bg border-accent-gold shadow-lg' 
-              : 'bg-slate-800/50 border-slate-700 text-slate-300 hover:bg-slate-800 hover:border-slate-500'
-            }`}
-        >
-           <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
-           <span className="text-xl font-serif font-bold">Surprise Me</span>
-           <span className="text-xs opacity-70">Whatever fits best</span>
-        </button>
-      </div>
-
-      <div className="flex justify-center mt-12">
-        <Button variant="ghost" onClick={onBack}>Back</Button>
       </div>
     </div>
   );
@@ -323,14 +269,13 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ onComplete }) => {
     setting: null,
     language: 'English',
     age: '',
-    specificInterest: '',
-    format: ReadingFormat.TEXT
+    specificInterest: ''
   });
 
   const handleNext = (data: Partial<UserPreferences>) => {
     const newPrefs = { ...prefs, ...data };
     setPrefs(newPrefs);
-    if (step < 7) { 
+    if (step < 6) { 
       setStep(step + 1);
     } else {
       onComplete(newPrefs);
@@ -343,7 +288,6 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ onComplete }) => {
 
   const steps = [
     <LanguageStep key="lang" onNext={handleNext} onBack={handleBack} data={prefs} />,
-    <FormatStep key="format" onNext={handleNext} onBack={handleBack} data={prefs} />,
     <AgeStep key="age" onNext={handleNext} onBack={handleBack} data={prefs} />,
     <WeatherStep key="weather" onNext={handleNext} onBack={handleBack} data={prefs} />,
     <MoodStep key="mood" onNext={handleNext} onBack={handleBack} data={prefs} />,
@@ -358,7 +302,7 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ onComplete }) => {
       <div className="w-full h-1 bg-slate-800 rounded-full mb-12 overflow-hidden">
         <div 
           className="h-full bg-accent-gold transition-all duration-500 ease-out"
-          style={{ width: `${((step + 1) / 8) * 100}%` }}
+          style={{ width: `${((step + 1) / 7) * 100}%` }}
         />
       </div>
       
