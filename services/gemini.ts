@@ -56,6 +56,9 @@ const DISCOVERY_GENRES = [
   'Apocalyptic', 'Post-Apocalyptic', 'Zombie', 'Vampire', 'Ghost Stories', 'Gothic', 'Southern Gothic',
   'Young Adult', 'New Adult', 'Middle Grade', 'Children\'s Books', 'Picture Books', 'Adventure',
 
+  // Aesthetics & Niche
+  'Dark Academia', 'Light Academia', 'Cottagecore', 'Solarpunk', 'Afrofuturism', 'Weird Fiction', 'Speculative Fiction',
+
   // Lifestyle, Arts & Business
   'Biography', 'Autobiography', 'Memoir', 'Essays', 'Journalism', 'True Crime',
   'Technology', 'Artificial Intelligence', 'Psychology', 'Sociology', 'Anthropology', 'Philosophy', 'Spirituality',
@@ -86,12 +89,12 @@ const FALLBACK_TRENDING: Book[] = [
       language: "English", moviePairing: "Limitless", musicPairing: "Focus Flow Playlist", foodPairing: "Black Coffee" 
     },
     { 
-      title: "The Catalyst", author: "Jonah Berger", isbn: "9781982108605", 
-      description: "Everyone has something they want to change. Marketers want to change their customers' minds and leaders want to change organizations.", 
-      reasoning: "Understanding how to remove barriers to change rather than pushing harder.", 
-      moodColor: "#3b82f6", genre: "Psychology", 
-      excerpt: "To change minds, don't push. Remove the barriers.", 
-      language: "English", moviePairing: "Moneyball", musicPairing: "Modern Classical", foodPairing: "Sparkling Water" 
+      title: "The Psychology of Money", author: "Morgan Housel", isbn: "9780857197689", 
+      description: "Timeless lessons on wealth, greed, and happiness.", 
+      reasoning: "Money is not a math problem, it's a behavioral problem.", 
+      moodColor: "#10b981", genre: "Finance", 
+      excerpt: "Doing well with money has a little to do with how smart you are and a lot to do with how you behave.", 
+      language: "English", moviePairing: "The Big Short", musicPairing: "Modern Jazz", foodPairing: "Espresso" 
     },
     { 
       title: "Deep Work", author: "Cal Newport", isbn: "9781455586691", 
@@ -99,33 +102,121 @@ const FALLBACK_TRENDING: Book[] = [
       reasoning: "Essential reading for mastering focus in the age of notifications.", 
       moodColor: "#f59e0b", genre: "Productivity", 
       excerpt: "Clarity about what matters provides clarity about what does not.", 
-      language: "English", moviePairing: "The Social Network", musicPairing: "White Noise", foodPairing: "Green Tea" 
+      language: "English", moviePairing: "The Social Network", musicPairing: "White Noise / Brown Noise", foodPairing: "Green Tea" 
     },
     { 
-      title: "The Psychology of Money", author: "Morgan Housel", isbn: "9780857197689", 
-      description: "Timeless lessons on wealth, greed, and happiness.", 
-      reasoning: "Money is not a math problem, it's a behavioral problem.", 
-      moodColor: "#10b981", genre: "Finance", 
-      excerpt: "Doing well with money has a little to do with how smart you are and a lot to do with how you behave.", 
-      language: "English", moviePairing: "The Big Short", musicPairing: "Jazz", foodPairing: "Espresso" 
+      title: "Meditations", author: "Marcus Aurelius", isbn: "9780140441406", 
+      description: "Private notes of the Roman Emperor and Stoic philosopher.", 
+      reasoning: "Ancient wisdom for modern chaos.", 
+      moodColor: "#78350f", genre: "Philosophy", 
+      excerpt: "You have power over your mind - not outside events. Realize this, and you will find strength.", 
+      language: "English", moviePairing: "Gladiator", musicPairing: "Gregorian Chants", foodPairing: "Bread & Olive Oil" 
+    },
+
+    // Fiction - Sci-Fi & Fantasy
+    { 
+      title: "Dune", author: "Frank Herbert", isbn: "9780441172719", 
+      description: "A mythic and emotionally charged hero's journey on a desert planet.", 
+      reasoning: "A masterpiece of world-building and politics.", 
+      moodColor: "#d97706", genre: "Sci-Fi", 
+      excerpt: "I must not fear. Fear is the mind-killer.", 
+      language: "English", moviePairing: "Blade Runner 2049", musicPairing: "Hans Zimmer Scores", foodPairing: "Spiced Coffee" 
+    },
+    { 
+      title: "Project Hail Mary", author: "Andy Weir", isbn: "9780593135204", 
+      description: "A lone astronaut must save the earth from disaster.", 
+      reasoning: "Optimistic, scientific, and incredibly gripping.", 
+      moodColor: "#eab308", genre: "Sci-Fi", 
+      excerpt: "I wake up. I don't know my name.", 
+      language: "English", moviePairing: "The Martian", musicPairing: "Synthwave", foodPairing: "Freeze-dried Ice Cream" 
+    },
+    { 
+      title: "Circe", author: "Madeline Miller", isbn: "9780316556347", 
+      description: "A bold retelling of the life of the goddess Circe.", 
+      reasoning: "Lyrical, magical, and deeply feminist.", 
+      moodColor: "#b45309", genre: "Fantasy", 
+      excerpt: "But in a solitary life, there are rare moments when another soul dips near yours.", 
+      language: "English", moviePairing: "Pan's Labyrinth", musicPairing: "Harp Music", foodPairing: "Wine & Cheese" 
+    },
+    { 
+      title: "The Name of the Wind", author: "Patrick Rothfuss", isbn: "9780756404741", 
+      description: "The tale of Kvothe, from his childhood in a troupe of traveling players to his years as a wizard.", 
+      reasoning: "Poetic prose and an intricate magic system.", 
+      moodColor: "#15803d", genre: "Fantasy", 
+      excerpt: "It was the patient, cut-flower sound of a man who is waiting to die.", 
+      language: "English", moviePairing: "Stardust", musicPairing: "Lute & Folk", foodPairing: "Hearty Stew" 
+    },
+
+    // Fiction - Mystery & Thriller
+    { 
+      title: "The Silent Patient", author: "Alex Michaelides", isbn: "9781250301697", 
+      description: "A woman shoots her husband five times in the face and then never speaks another word.", 
+      reasoning: "A psychological thriller with a twist you won't see coming.", 
+      moodColor: "#991b1b", genre: "Thriller", 
+      excerpt: "Alicia Berenson’s life is seemingly perfect.", 
+      language: "English", moviePairing: "Gone Girl", musicPairing: "Tense Strings", foodPairing: "Dark Chocolate" 
+    },
+    { 
+      title: "The Thursday Murder Club", author: "Richard Osman", isbn: "9780593299395", 
+      description: "Four septuagenarians meet weekly to solve cold cases.", 
+      reasoning: "Charming, funny, and surprisingly poignant.", 
+      moodColor: "#4f46e5", genre: "Mystery", 
+      excerpt: "Peace and quiet is all very well, but it can be quite boring.", 
+      language: "English", moviePairing: "Knives Out", musicPairing: "British Invasion Rock", foodPairing: "Tea & Scones" 
+    },
+
+    // Literary & Contemporary
+    { 
+      title: "The Midnight Library", author: "Matt Haig", isbn: "9780525559474", 
+      description: "Between life and death there is a library, and within that library, the shelves go on forever.", 
+      reasoning: "A beautiful exploration of regret and the choices we make.", 
+      moodColor: "#1e293b", genre: "Fiction", 
+      excerpt: "Between life and death there is a library.", 
+      language: "English", moviePairing: "It's a Wonderful Life", musicPairing: "Ambient Piano", foodPairing: "Peppermint Tea" 
+    },
+    { 
+      title: "Norwegian Wood", author: "Haruki Murakami", isbn: "9780375704024", 
+      description: "A magnificent story of love, loss, and coming of age in 1960s Tokyo.", 
+      reasoning: "Melancholic, atmospheric, and deeply moving.", 
+      moodColor: "#3f6212", genre: "Literary Fiction", 
+      excerpt: "I was 37 then, strapped in my seat as the huge 747 plunged...", 
+      language: "English", moviePairing: "Lost in Translation", musicPairing: "The Beatles & Jazz", foodPairing: "Whiskey" 
     },
     
-    // Indian Heritage & Classics
+    // Classics & Dark Academia
     { 
-      title: "Wings of Fire", author: "A.P.J. Abdul Kalam", isbn: "9788173711466", 
-      description: "An autobiography of the former President of India, Dr. A.P.J. Abdul Kalam.", 
-      reasoning: "A story of resilience, innovation, and the power of dreaming big.", 
-      moodColor: "#ea580c", genre: "Autobiography", 
-      excerpt: "We are all born with a divine fire in us. Our efforts should be to give wings to this fire.", 
-      language: "English", moviePairing: "Rocketry: The Nambi Effect", musicPairing: "Indian Classical (Raga Bhairavi)", foodPairing: "Filter Coffee" 
+      title: "The Secret History", author: "Donna Tartt", isbn: "9781400031702", 
+      description: "Under the influence of their charismatic classics professor, a group of clever misfits discover a new way of thinking.", 
+      reasoning: "The ultimate Dark Academia novel.", 
+      moodColor: "#2e1065", genre: "Dark Academia", 
+      excerpt: "The snow in the mountains was melting and Bunny had been dead for several weeks.", 
+      language: "English", moviePairing: "Dead Poets Society", musicPairing: "Classical & Choral", foodPairing: "Black Coffee & Cigarettes" 
     },
     { 
-      title: "The Palace of Illusions", author: "Chitra Banerjee Divakaruni", isbn: "9781400096206", 
-      description: "A reimagining of the world-famous Indian epic, the Mahabharat—told from the point of view of Panchaali.", 
-      reasoning: "A feminist and magical perspective on ancient mythology.", 
-      moodColor: "#db2777", genre: "Mythology", 
-      excerpt: "I am Draupadi, born of fire.", 
-      language: "English", moviePairing: "Baahubali", musicPairing: "Sitar Instrumentals", foodPairing: "Saffron Milk" 
+      title: "Pride and Prejudice", author: "Jane Austen", isbn: "9780141439518", 
+      description: "The romantic clash between the opinionated Elizabeth and her proud beau, Mr. Darcy.", 
+      reasoning: "The gold standard of witty romance.", 
+      moodColor: "#be185d", genre: "Romance", 
+      excerpt: "It is a truth universally acknowledged...", 
+      language: "English", moviePairing: "Emma", musicPairing: "String Quartets", foodPairing: "Cucumber Sandwiches" 
+    },
+    { 
+      title: "1984", author: "George Orwell", isbn: "9780451524935", 
+      description: "Among the seminal texts of the 20th century, a haunting dystopia.", 
+      reasoning: "A chilling look at surveillance and truth.", 
+      moodColor: "#171717", genre: "Dystopian", 
+      excerpt: "It was a bright cold day in April, and the clocks were striking thirteen.", 
+      language: "English", moviePairing: "Brazil", musicPairing: "Industrial / Noise", foodPairing: "Gin" 
+    },
+
+    // Indian Heritage
+    { 
+      title: "The God of Small Things", author: "Arundhati Roy", isbn: "9780812979657", 
+      description: "A drama of a family in Kerala, India, navigating love and social obligation.", 
+      reasoning: "Lush prose that feels like a humid monsoon day.", 
+      moodColor: "#065f46", genre: "Literary Fiction", 
+      excerpt: "May in Ayemenem is a hot, brooding month.", 
+      language: "English", moviePairing: "The Namesake", musicPairing: "Carnatic Violin", foodPairing: "Mango Pickles" 
     },
     { 
       title: "Train to Pakistan", author: "Khushwant Singh", isbn: "9780143065883", 
@@ -134,15 +225,7 @@ const FALLBACK_TRENDING: Book[] = [
       moodColor: "#7f1d1d", genre: "Historical Fiction", 
       excerpt: "The summer of 1947 was not like other Indian summers.", 
       language: "English", moviePairing: "Garam Hawa", musicPairing: "Silence", foodPairing: "Chai" 
-    },
-
-    // Global Fiction
-    { title: "The Midnight Library", author: "Matt Haig", isbn: "9780525559474", description: "Between life and death there is a library.", reasoning: "Global bestseller.", moodColor: "#1e293b", genre: "Fiction", excerpt: "Between life and death there is a library.", language: "English", moviePairing: "It's a Wonderful Life" },
-    { title: "Project Hail Mary", author: "Andy Weir", isbn: "9780593135204", description: "A lone astronaut must save the earth.", reasoning: "Gripping Sci-Fi.", moodColor: "#eab308", genre: "Sci-Fi", excerpt: "I wake up.", language: "English", moviePairing: "The Martian" },
-    { title: "Dune", author: "Frank Herbert", isbn: "9780441172719", description: "A mythic and emotionally charged hero's journey.", reasoning: "Sci-Fi Masterpiece.", moodColor: "#d97706", genre: "Sci-Fi", excerpt: "I must not fear.", language: "English", moviePairing: "Blade Runner 2049" },
-    { title: "1984", author: "George Orwell", isbn: "9780451524935", description: "Big Brother is watching you.", reasoning: "Classic Dystopia.", moodColor: "#3f3f46", genre: "Dystopian", excerpt: "It was a bright cold day in April.", language: "English", moviePairing: "Brazil" },
-    { title: "The Hobbit", author: "J.R.R. Tolkien", isbn: "9780547928227", description: "In a hole in the ground there lived a hobbit.", reasoning: "Fantasy Classic.", moodColor: "#166534", genre: "Fantasy", excerpt: "In a hole in the ground there lived a hobbit.", language: "English", moviePairing: "The Lord of the Rings" },
-    { title: "Pride and Prejudice", author: "Jane Austen", isbn: "9780141439518", description: "It is a truth universally acknowledged...", reasoning: "Romance Classic.", moodColor: "#f472b6", genre: "Romance", excerpt: "It is a truth universally acknowledged.", language: "English", moviePairing: "Emma" }
+    }
 ];
 
 // --- SECURITY & UTILS ---
@@ -153,7 +236,7 @@ const sanitizeInput = (input: string): string => {
 };
 
 const parseJSON = <T>(text: string | undefined): T => {
-  if (!text) return [] as unknown as T;
+  if (!text) return {} as unknown as T;
   try {
     const cleanText = text.replace(/```json\s*([\s\S]*?)\s*```/g, '$1')
                           .replace(/```\s*([\s\S]*?)\s*```/g, '$1')
@@ -185,46 +268,91 @@ const bookSchema: Schema = {
   properties: {
     title: { type: Type.STRING },
     author: { type: Type.STRING },
-    isbn: { type: Type.STRING, description: "A valid ISBN-13 for the PAPERBACK edition. Crucial for cover images." },
-    genre: { type: Type.STRING },
-    description: { type: Type.STRING, description: "2 sentences max." },
-    reasoning: { type: Type.STRING, description: "One short sentence on why it fits." },
-    moodColor: { type: Type.STRING, description: "Hex color code matching the book's vibe." },
-    excerpt: { type: Type.STRING, description: "A very short, atmospheric teaser sentence." },
-    ebookUrl: { type: Type.STRING, description: "A link to the E-Book (Project Gutenberg, OpenLibrary, or Google Books). If not free, provide a Google Books/Amazon link." },
-    moviePairing: { type: Type.STRING, description: "A movie or visual media recommendation that matches the book's specific mood and aesthetic." },
-    musicPairing: { type: Type.STRING, description: "A specific song, album, or genre that perfectly scores the reading experience." },
-    foodPairing: { type: Type.STRING, description: "A food or drink item that pairs with the book's setting or vibe." },
-    language: { type: Type.STRING, description: "The primary language of the book edition (e.g. 'English', 'Spanish')." }
+    isbn: { type: Type.STRING, description: "A valid ISBN-13 for the PAPERBACK edition." },
+    genre: { type: Type.STRING, description: "The Atmospheric Role (e.g., 'Grounding', 'Quiet Escape', 'Reflective')." },
+    description: { type: Type.STRING, description: "2 sentences max synopsis." },
+    reasoning: { type: Type.STRING, description: "The 'Why now' explanation (35–45 words) referencing context." },
+    moodColor: { type: Type.STRING, description: "Hex color matching the book's vibe." },
+    excerpt: { type: Type.STRING, description: "One-line atmospheric description (max 20 words)." },
+    ebookUrl: { type: Type.STRING },
+    moviePairing: { type: Type.STRING },
+    musicPairing: { type: Type.STRING },
+    foodPairing: { type: Type.STRING },
+    language: { type: Type.STRING }
   },
   required: ["title", "author", "isbn", "reasoning", "moodColor", "genre", "description", "excerpt", "moviePairing", "musicPairing", "foodPairing", "language"],
 };
 
-export const getBookRecommendations = async (prefs: UserPreferences): Promise<Book[]> => {
+const recommendationResponseSchema: Schema = {
+    type: Type.OBJECT,
+    properties: {
+        heading: { type: Type.STRING, description: "Reading Moment: A poetic but clear one-sentence description." },
+        insight: { type: Type.STRING, description: "Read-Differently Insight: Single sentence on how a book feels different now." },
+        antiRecommendation: { type: Type.STRING, description: "Anti-Recommendation: What to avoid and why (<= 25 words)." },
+        books: { type: Type.ARRAY, items: bookSchema }
+    },
+    required: ["heading", "insight", "antiRecommendation", "books"]
+};
+
+export const getBookRecommendations = async (prefs: UserPreferences): Promise<{ heading: string, insight: string, antiRecommendation: string, books: Book[] }> => {
   if (!apiKey) throw new Error("API Key is missing. Please check your environment configuration.");
   
   const model = "gemini-2.5-flash";
   const sanitizedInterest = sanitizeInput(prefs.specificInterest || "Surprise me");
   
+  // Context Derivation
+  const date = new Date();
+  const hours = date.getHours();
+  const month = date.getMonth(); // 0-11
+  
+  const timeOfDay = hours < 5 ? "Late Night" : hours < 12 ? "Morning" : hours < 17 ? "Afternoon" : hours < 21 ? "Evening" : "Night";
+  const season = (month < 2 || month === 11) ? "Winter" : (month < 5) ? "Spring" : (month < 8) ? "Summer" : "Autumn";
+  
+  const paceMap: Record<string, string> = { 'Slow burn': 'Low', 'Moderate pace': 'Medium', 'Fast-paced page turner': 'High' };
+  const energyLevel = paceMap[prefs.pace || ''] || 'Medium';
+
   const prompt = `
-    Recommend 4 atmospheric books in ${prefs.language || 'English'} specifically curated for the '${prefs.age}' age group.
-    
-    User Context:
+    You are Atmosphera, an advanced context-aware literary intelligence system.
+    You do not recommend books based on popularity, ratings, or generic similarity.
+    You recommend books that fit a specific moment in a person’s life.
+
+    READER CONTEXT
+    External:
+    - Current weather: ${prefs.weather}
+    - Time of day: ${timeOfDay}
+    - Season: ${season}
+
+    Internal:
+    - Primary emotion: ${prefs.mood}
+    - Secondary emotion: (Infer from mood + weather)
+    - Mental energy level: ${energyLevel} (derived from preference: ${prefs.pace})
     - Age Group: ${prefs.age}
-    - Weather: ${prefs.weather}
-    - Mood: ${prefs.mood}
-    - Pace: ${prefs.pace}
-    - Setting: ${prefs.setting}
-    - Interest: ${sanitizedInterest}
-    - Format Preference: ${prefs.preferredFormat === 'audio' ? 'Audiobook (Focus on narration quality)' : 'Text'}
-    
-    CRITICAL INSTRUCTIONS:
-    1. **Markov Chain Genre Switching**: Do NOT recommend 4 books of the exact same genre. Simulate a Markov chain where the genre shifts slightly between recommendations.
-    2. **Aesthetics**: Infer a dominant "Mood Color" and "Movie Pairing" for each book based on the User Context provided.
-    3. Return VALID JSON matching the schema.
-    4. ISBN MUST be for a widely available PAPERBACK edition (ISBN-13 preferred).
-    5. Include a valid 'ebookUrl' for each book (prioritize free sources like Project Gutenberg if public domain).
-    ${prefs.preferredFormat === 'audio' ? '6. If possible, mention the specific narrator in the "reasoning" field (e.g., "Narrated by [Name], bringing the character to life...").' : ''}
+
+    Reading intent:
+    - Preferred language: ${prefs.language || 'English'}
+    - Medium: ${prefs.preferredFormat === 'audio' ? 'Audiobook' : 'Text'}
+    - Desired narrative setting: ${prefs.setting}
+    - Specific Interest: ${sanitizedInterest}
+
+    TASKS (REASON INTERNALLY)
+    1. Translate the weather and time of day into literary psychology (Emotional undertone, Narrative pacing, Imagery density).
+    2. Combine emotional state and mental energy to determine cognitive load tolerance and emotional arc strategy (stabilize / gently uplift / deepen / challenge safely).
+    3. Determine whether the reader should stay within comfort zone or explore slightly beyond it (do NOT recommend emotionally disruptive content).
+
+    OUTPUT REQUIREMENTS (JSON)
+    4. Generate a poetic but clear one-sentence description of this reading moment. (Field: 'heading')
+    5. Recommend 5 books optimized for THIS EXACT MOMENT.
+       - 'genre': Use this field for the Atmospheric Role (e.g., "Grounding", "Reflective", "Immersive", "Quiet Escape").
+       - 'excerpt': One-line atmosphere description (≤20 words).
+       - 'reasoning': “Why now” explanation (35–45 words) explicitly referencing weather, emotion, mental energy, and setting.
+    6. Anti-Recommendation (MANDATORY): Identify one type of book or specific title that would be a poor fit right now, and explain why. (Field: 'antiRecommendation')
+    7. Read-Differently Insight: Explain in one sentence how at least one recommended book feels different when read in this specific weather and emotional state. (Field: 'insight')
+
+    RULES
+    - Avoid bestseller bias unless contextually perfect.
+    - Do not repeat authors.
+    - Use refined, calm, literary language. No marketing tone.
+    - ISBN MUST be for a widely available PAPERBACK edition (ISBN-13 preferred).
   `;
 
   try {
@@ -234,17 +362,92 @@ export const getBookRecommendations = async (prefs: UserPreferences): Promise<Bo
         contents: prompt,
         config: {
           responseMimeType: "application/json",
-          responseSchema: { type: Type.ARRAY, items: bookSchema },
+          responseSchema: recommendationResponseSchema,
         }
       });
     });
-    return parseJSON<Book[]>(response.text);
+    
+    const result = parseJSON<{ heading: string, insight: string, antiRecommendation: string, books: Book[] }>(response.text);
+    
+    // Post-process to ensure ebookUrl is always present (fallback to OpenLibrary)
+    const processedBooks = (result.books || []).map(b => ({
+        ...b,
+        ebookUrl: b.ebookUrl || `https://openlibrary.org/search?q=${encodeURIComponent(b.title + ' ' + b.author)}`
+    }));
+
+    return {
+        heading: result.heading || `Curated for a ${prefs.mood} ${season} day`,
+        insight: result.insight || "These pages will resonate differently today.",
+        antiRecommendation: result.antiRecommendation || "Avoid heavy tragedies today.",
+        books: processedBooks
+    };
+
   } catch (error: any) {
     throw new Error(formatError(error, "getBookRecommendations"));
   }
 };
 
 // --- DATASET ACCESS (GOOGLE BOOKS API) ---
+
+// Heuristic engine to generate missing metadata for search results
+const enrichBookMetadata = (title: string, author: string, genre: string, description: string): Partial<Book> => {
+    const text = (title + genre + description).toLowerCase();
+    
+    let moodColor = '#475569'; // Slate default
+    let music = 'Ambient Lo-Fi';
+    let food = 'Earl Grey Tea';
+    let movie = 'The Secret Life of Walter Mitty';
+
+    // Heuristics
+    if (text.includes('thriller') || text.includes('mystery') || text.includes('crime') || text.includes('murder')) {
+        moodColor = '#7f1d1d'; // Red/Dark
+        music = 'Tense Orchestral Scores';
+        food = 'Black Coffee';
+        movie = 'Knives Out';
+    } else if (text.includes('romance') || text.includes('love')) {
+        moodColor = '#be185d'; // Pink
+        music = 'Acoustic Guitar & Vocals';
+        food = 'Red Wine & Dark Chocolate';
+        movie = 'Pride & Prejudice (2005)';
+    } else if (text.includes('sci-fi') || text.includes('science fiction') || text.includes('space') || text.includes('future')) {
+        moodColor = '#1e3a8a'; // Blue
+        music = 'Synthwave / Electronic';
+        food = 'Freeze-dried Ice Cream';
+        movie = 'Interstellar';
+    } else if (text.includes('fantasy') || text.includes('magic') || text.includes('dragon')) {
+        moodColor = '#581c87'; // Purple
+        music = 'Celtic Folk / Epic Fantasy';
+        food = 'Hearty Stew & Ale';
+        movie = 'The Lord of the Rings';
+    } else if (text.includes('horror') || text.includes('scary') || text.includes('ghost')) {
+        moodColor = '#000000'; // Black
+        music = 'Unsettling Drones';
+        food = 'Something suspicious...';
+        movie = 'Hereditary';
+    } else if (text.includes('history') || text.includes('historical')) {
+        moodColor = '#78350f'; // Brown
+        music = 'Classical Period Pieces';
+        food = 'Fresh Bread & Cheese';
+        movie = 'The King\'s Speech';
+    } else if (text.includes('self-help') || text.includes('psychology') || text.includes('habit')) {
+        moodColor = '#059669'; // Green
+        music = 'Binaural Beats for Focus';
+        food = 'Green Smoothie';
+        movie = 'Good Will Hunting';
+    } else if (text.includes('dystopian') || text.includes('apocalypse')) {
+        moodColor = '#171717'; // Dark Gray
+        music = 'Industrial Ambient';
+        food = 'Canned Peaches';
+        movie = 'Children of Men';
+    } else if (text.includes('india') || text.includes('delhi') || text.includes('bombay')) {
+        moodColor = '#ea580c'; // Orange
+        music = 'Sitar & Tabla';
+        food = 'Masala Chai';
+        movie = 'The Lunchbox';
+    }
+
+    return { moodColor, musicPairing: music, foodPairing: food, moviePairing: movie };
+};
 
 const mapGoogleBook = (item: any): Book => {
     const info = item.volumeInfo;
@@ -253,28 +456,40 @@ const mapGoogleBook = (item: any): Book => {
 
     const isbnObj = info.industryIdentifiers?.find((i: any) => i.type === 'ISBN_13') || info.industryIdentifiers?.[0];
     const category = info.categories?.[0] || 'General';
+    const description = info.description ? (info.description.substring(0, 200) + '...') : 'No description available.';
     
-    const hash = (info.title || '').split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
-    const colors = ['#1e293b', '#334155', '#0f172a', '#1e1b4b', '#312e81', '#3730a3', '#4c1d95', '#581c87', '#701a75', '#831843', '#881337', '#9f1239', '#064e3b', '#14532d', '#713f12', '#451a03'];
-    const moodColor = colors[hash % colors.length];
+    // Enrich with heuristics
+    const enriched = enrichBookMetadata(info.title, info.authors?.[0] || '', category, description);
 
     let thumb = info.imageLinks?.thumbnail || info.imageLinks?.smallThumbnail;
     if (thumb) thumb = thumb.replace('http:', 'https:');
+
+    // Priority: Web Reader -> Preview -> Info -> OpenLibrary Search
+    const webReaderLink = accessInfo?.webReaderLink;
+    const previewLink = info.previewLink;
+    const infoLink = info.infoLink;
+    
+    let ebookUrl = webReaderLink || previewLink || infoLink;
+    
+    // Ensure every book has a link. Fallback to Open Library if no Google Books link is found.
+    if (!ebookUrl) {
+        ebookUrl = `https://openlibrary.org/search?q=${encodeURIComponent(info.title + ' ' + (info.authors?.[0] || ''))}`;
+    }
 
     return {
         title: info.title,
         author: info.authors ? info.authors.join(', ') : 'Unknown',
         isbn: isbnObj?.identifier,
-        description: info.description ? (info.description.substring(0, 200) + '...') : 'No description available.',
+        description: description,
         reasoning: `From the Global Archive: ${category}`,
-        moodColor: moodColor,
+        moodColor: enriched.moodColor || '#475569',
         genre: category,
         excerpt: info.searchInfo?.textSnippet || info.description?.substring(0, 100) || "Click to explore this title...",
         language: info.language,
-        moviePairing: "Ask the Librarian",
-        musicPairing: "Ambient Noise", 
-        foodPairing: "Tea",
-        ebookUrl: info.previewLink || info.infoLink,
+        moviePairing: enriched.moviePairing || "Ask the Librarian",
+        musicPairing: enriched.musicPairing || "Ambient Noise", 
+        foodPairing: enriched.foodPairing || "Tea",
+        ebookUrl: ebookUrl,
         coverUrl: thumb,
         
         publisher: info.publisher,
@@ -348,7 +563,11 @@ export const getTrendingBooks = async (context?: string, orderByNewest: boolean 
              const retryData = await retryRes.json();
              if (retryData.items) return retryData.items.map(mapGoogleBook);
         }
-        return [...FALLBACK_TRENDING].sort(() => Math.random() - 0.5);
+        // Fallback with mapped URLs
+        return [...FALLBACK_TRENDING].map(b => ({
+            ...b,
+            ebookUrl: b.ebookUrl || `https://openlibrary.org/search?q=${encodeURIComponent(b.title + ' ' + b.author)}`
+        })).sort(() => Math.random() - 0.5);
     }
 
     const books = data.items.map(mapGoogleBook);
@@ -356,7 +575,11 @@ export const getTrendingBooks = async (context?: string, orderByNewest: boolean 
 
   } catch (error) {
     console.warn("Discovery Engine unreachable, using fallback cache.", error);
-    return [...FALLBACK_TRENDING].sort(() => Math.random() - 0.5);
+    // Fallback with mapped URLs
+    return [...FALLBACK_TRENDING].map(b => ({
+        ...b,
+        ebookUrl: b.ebookUrl || `https://openlibrary.org/search?q=${encodeURIComponent(b.title + ' ' + b.author)}`
+    })).sort(() => Math.random() - 0.5);
   }
 };
 

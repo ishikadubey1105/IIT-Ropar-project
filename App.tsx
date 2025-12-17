@@ -41,6 +41,7 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [recTitle, setRecTitle] = useState("Just For You");
+  const [recContext, setRecContext] = useState<{ insight: string, anti: string } | null>(null);
   const [scrollY, setScrollY] = useState(0);
 
   // Initial Load & Scroll Listener
@@ -92,16 +93,19 @@ function App() {
     setLoading(true);
     setError(null);
     setView('home');
+    setRecContext(null);
     
-    let title = `For a ${prefs.weather} ${prefs.mood} day`;
-    if (prefs.language && prefs.language !== 'English') {
-      title += ` in ${prefs.language}`;
-    }
-    setRecTitle(title);
+    // Default fallback title while loading
+    setRecTitle(`Curating for a ${prefs.mood} ${prefs.weather} day...`);
 
     try {
-      const books = await getBookRecommendations(prefs);
-      setRecommendations(books);
+      // The AI now returns an object { heading, insight, antiRecommendation, books }
+      const result = await getBookRecommendations(prefs);
+      
+      setRecommendations(result.books);
+      setRecTitle(result.heading);
+      setRecContext({ insight: result.insight, anti: result.antiRecommendation });
+      
       setTimeout(() => {
         const el = document.getElementById('recommendations-row');
         if(el) el.scrollIntoView({ behavior: 'smooth' });
@@ -307,6 +311,27 @@ function App() {
                 
                 {recommendations.length > 0 && (
                 <div id="recommendations-row">
+                    <div className="px-6 md:px-12 mb-6 animate-fade-in">
+                        {recContext && (
+                            <div className="max-w-4xl mb-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="p-4 rounded-xl bg-gradient-to-r from-accent-gold/10 to-transparent border-l-4 border-accent-gold">
+                                    <h3 className="text-accent-gold text-xs font-bold uppercase tracking-widest mb-1 flex items-center gap-2">
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                                        Atmospheric Insight
+                                    </h3>
+                                    <p className="text-slate-200 font-serif italic text-lg opacity-90">"{recContext.insight}"</p>
+                                </div>
+                                
+                                <div className="p-4 rounded-xl bg-gradient-to-r from-red-900/10 to-transparent border-l-4 border-red-500/50">
+                                    <h3 className="text-red-400 text-xs font-bold uppercase tracking-widest mb-1 flex items-center gap-2">
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
+                                        Avoid for now
+                                    </h3>
+                                    <p className="text-slate-300 text-sm opacity-90 leading-relaxed">{recContext.anti}</p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                     <BookRow title={recTitle} books={recommendations} onBookClick={handleBookClick} />
                 </div>
                 )}

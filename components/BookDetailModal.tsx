@@ -89,6 +89,14 @@ export const BookDetailModal: React.FC<BookDetailModalProps> = ({ book, onClose,
     }
   };
 
+  // Logic to determine button text based on source
+  const isOpenLibrary = book.ebookUrl?.includes('openlibrary');
+  const primaryButtonText = book.saleability === 'FREE' 
+    ? 'Read for Free' 
+    : isOpenLibrary 
+        ? 'Borrow for Free' 
+        : 'Get E-Book';
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/90 backdrop-blur-md" onClick={onClose} />
@@ -198,7 +206,7 @@ export const BookDetailModal: React.FC<BookDetailModalProps> = ({ book, onClose,
                     className="flex-1 min-w-[140px] bg-accent-gold text-deep-bg font-bold py-4 rounded-xl hover:bg-yellow-500 transition-all flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(212,175,55,0.3)] text-lg hover:-translate-y-1 active:scale-95"
                     >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
-                    {book.saleability === 'FREE' ? 'Read for Free' : 'Get E-Book'}
+                    {primaryButtonText}
                     </a>
                 )}
                 
@@ -247,7 +255,7 @@ export const BookDetailModal: React.FC<BookDetailModalProps> = ({ book, onClose,
                 </button>
                 </div>
                 
-                {/* READING PROGRESS SECTION (NEW) */}
+                {/* READING PROGRESS SECTION */}
                 {isActiveRead && progress && (
                   <div className="bg-white/5 p-6 md:p-8 rounded-2xl border border-accent-gold/20 shadow-inner animate-fade-in relative overflow-hidden group">
                      <div className="absolute top-0 right-0 p-12 bg-accent-gold/5 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
@@ -332,8 +340,8 @@ export const BookDetailModal: React.FC<BookDetailModalProps> = ({ book, onClose,
                 )}
                 </div>
                 
-                {/* E-Book Metadata Section */}
-                {(book.isEbook || book.saleability !== 'NOT_FOR_SALE') && (
+                {/* E-Book Metadata Section (Always show if we have a link) */}
+                {(book.isEbook || book.saleability !== 'NOT_FOR_SALE' || book.ebookUrl) && (
                 <div className="mt-6 p-4 bg-gradient-to-r from-blue-900/20 to-purple-900/20 rounded-xl border border-blue-500/30">
                     <div className="flex flex-wrap items-center justify-between gap-4">
                         <div className="flex items-center gap-3">
@@ -346,21 +354,26 @@ export const BookDetailModal: React.FC<BookDetailModalProps> = ({ book, onClose,
                                     {book.epubAvailable && <span className="bg-green-500/20 text-green-300 px-2 py-0.5 rounded border border-green-500/30">ePub</span>}
                                     {book.pdfAvailable && <span className="bg-red-500/20 text-red-300 px-2 py-0.5 rounded border border-red-500/30">PDF</span>}
                                     {book.accessViewStatus === 'FULL_PUBLIC_DOMAIN' && <span className="bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded border border-amber-500/30">Public Domain</span>}
+                                    {isOpenLibrary && <span className="bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded border border-amber-500/30">Open Library</span>}
                                 </div>
                             </div>
                         </div>
                         
                         <div className="text-right">
-                            {book.saleability === 'FREE' && <span className="text-2xl font-bold text-emerald-400">Free</span>}
-                            {book.price && (
+                            {book.saleability === 'FREE' ? (
+                                <span className="text-2xl font-bold text-emerald-400">Free</span>
+                            ) : isOpenLibrary ? (
+                                <span className="text-2xl font-bold text-emerald-400">Borrow</span>
+                            ) : book.price ? (
                                 <div className="flex flex-col items-end">
                                     <span className="text-slate-400 text-xs uppercase">Price</span>
                                     <span className="text-2xl font-bold text-white">{book.price.amount} <span className="text-sm text-slate-400">{book.price.currencyCode}</span></span>
                                 </div>
-                            )}
+                            ) : null}
+
                             {(book.buyLink || book.ebookUrl) && (
                                 <a href={book.buyLink || book.ebookUrl} target="_blank" rel="noreferrer" className="text-xs text-accent-gold hover:underline block mt-1">
-                                    {book.saleability === 'FREE' ? 'Read Now' : 'Buy / Download'} &rarr;
+                                    {primaryButtonText} &rarr;
                                 </a>
                             )}
                         </div>
