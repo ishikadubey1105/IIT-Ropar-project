@@ -15,6 +15,8 @@ const LanguageStep: React.FC<StepProps> = ({ onNext, data }) => {
   const languages = [
     { code: "English", native: "English" },
     { code: "Hindi", native: "हिन्दी" },
+    { code: "Marathi", native: "मराठी" },
+    { code: "Gujarati", native: "ગુજરાતી" },
     { code: "Spanish", native: "Español" },
     { code: "French", native: "Français" },
     { code: "German", native: "Deutsch" },
@@ -47,6 +49,50 @@ const LanguageStep: React.FC<StepProps> = ({ onNext, data }) => {
             <span className={`text-xs uppercase tracking-wider ${data.language === lang.code ? 'text-black/70' : 'text-slate-500 group-hover:text-slate-400'}`}>{lang.code}</span>
           </button>
         ))}
+      </div>
+    </div>
+  );
+};
+
+const FormatStep: React.FC<StepProps> = ({ onNext, onBack, data }) => {
+  return (
+    <div className="animate-fade-in space-y-8 pb-12">
+      <h2 className="text-3xl md:text-4xl font-serif text-center mb-2 leading-tight">How do you consume stories?</h2>
+      <p className="text-slate-400 text-center mb-8">Choose your preferred medium.</p>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
+        <button
+          onClick={() => onNext({ preferredFormat: 'text' })}
+          className={`p-8 rounded-xl border transition-all duration-300 flex flex-col items-center justify-center gap-4 group
+            ${data.preferredFormat === 'text' 
+              ? 'bg-accent-gold text-deep-bg border-accent-gold shadow-lg' 
+              : 'bg-slate-800/50 border-slate-700 text-slate-300 hover:bg-slate-800 hover:border-slate-500'
+            }`}
+        >
+          <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+          <div className="text-center">
+            <span className="text-xl font-serif font-bold block mb-1">The Written Word</span>
+            <span className="text-xs uppercase tracking-widest opacity-70">Physical & E-books</span>
+          </div>
+        </button>
+
+        <button
+          onClick={() => onNext({ preferredFormat: 'audio' })}
+          className={`p-8 rounded-xl border transition-all duration-300 flex flex-col items-center justify-center gap-4 group
+            ${data.preferredFormat === 'audio' 
+              ? 'bg-accent-gold text-deep-bg border-accent-gold shadow-lg' 
+              : 'bg-slate-800/50 border-slate-700 text-slate-300 hover:bg-slate-800 hover:border-slate-500'
+            }`}
+        >
+          <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
+          <div className="text-center">
+            <span className="text-xl font-serif font-bold block mb-1">The Spoken Word</span>
+            <span className="text-xs uppercase tracking-widest opacity-70">Audiobooks</span>
+          </div>
+        </button>
+      </div>
+      <div className="flex justify-center mt-12">
+        <Button variant="ghost" onClick={onBack}>Back</Button>
       </div>
     </div>
   );
@@ -269,13 +315,14 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ onComplete }) => {
     setting: null,
     language: 'English',
     age: '',
-    specificInterest: ''
+    specificInterest: '',
+    preferredFormat: 'text' // Default to text
   });
 
   const handleNext = (data: Partial<UserPreferences>) => {
     const newPrefs = { ...prefs, ...data };
     setPrefs(newPrefs);
-    if (step < 6) { 
+    if (step < 7) { 
       setStep(step + 1);
     } else {
       onComplete(newPrefs);
@@ -288,6 +335,7 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ onComplete }) => {
 
   const steps = [
     <LanguageStep key="lang" onNext={handleNext} onBack={handleBack} data={prefs} />,
+    <FormatStep key="format" onNext={handleNext} onBack={handleBack} data={prefs} />,
     <AgeStep key="age" onNext={handleNext} onBack={handleBack} data={prefs} />,
     <WeatherStep key="weather" onNext={handleNext} onBack={handleBack} data={prefs} />,
     <MoodStep key="mood" onNext={handleNext} onBack={handleBack} data={prefs} />,
@@ -302,7 +350,7 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ onComplete }) => {
       <div className="w-full h-1 bg-slate-800 rounded-full mb-12 overflow-hidden">
         <div 
           className="h-full bg-accent-gold transition-all duration-500 ease-out"
-          style={{ width: `${((step + 1) / 7) * 100}%` }}
+          style={{ width: `${((step + 1) / 8) * 100}%` }}
         />
       </div>
       

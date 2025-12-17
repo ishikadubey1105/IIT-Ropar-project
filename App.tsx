@@ -5,48 +5,63 @@ import { BookRow } from './components/BookRow';
 import { BookDetailModal } from './components/BookDetailModal';
 import { Questionnaire } from './components/Questionnaire';
 import { LiveLibrarian } from './components/LiveLibrarian';
+import { BookCard } from './components/BookCard';
 import { getBookRecommendations, searchBooks, getTrendingBooks } from './services/gemini';
 import { getWishlist, toggleWishlist, isInWishlist } from './services/storage';
 import { UserPreferences, Book } from './types';
 
 function App() {
-  const [view, setView] = useState<'home' | 'curate'>('home');
+  const [view, setView] = useState<'home' | 'curate' | 'search'>('home');
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   
   // Data State
   const [trending, setTrending] = useState<Book[]>([]);
+  const [featuredBook, setFeaturedBook] = useState<Book | null>(null);
   const [trendingTitle, setTrendingTitle] = useState("Trending on Atmosphera");
   
   // Collections
   const [newBooks, setNewBooks] = useState<Book[]>([]);
   const [bestsellerBooks, setBestsellerBooks] = useState<Book[]>([]);
+  const [selfHelpBooks, setSelfHelpBooks] = useState<Book[]>([]);
   const [romanceBooks, setRomanceBooks] = useState<Book[]>([]);
   const [thrillerBooks, setThrillerBooks] = useState<Book[]>([]);
   const [gothicBooks, setGothicBooks] = useState<Book[]>([]);
   const [scifiBooks, setScifiBooks] = useState<Book[]>([]);
   const [classicBooks, setClassicBooks] = useState<Book[]>([]);
   const [fantasyBooks, setFantasyBooks] = useState<Book[]>([]);
+  const [indianBooks, setIndianBooks] = useState<Book[]>([]);
 
   const [wishlist, setWishlist] = useState<Book[]>([]);
   const [recommendations, setRecommendations] = useState<Book[]>([]);
-  const [searchResults, setSearchResults] = useState<Book[]>([]);
   
+  // Search State
+  const [searchResults, setSearchResults] = useState<Book[]>([]);
+  const [searchQuery, setSearchQuery] = useState(""); 
+  const [searchInputValue, setSearchInputValue] = useState(""); 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [recTitle, setRecTitle] = useState("Just For You");
   const [scrollY, setScrollY] = useState(0);
-  const [hasSearched, setHasSearched] = useState(false);
 
   // Initial Load & Scroll Listener
   useEffect(() => {
     setWishlist(getWishlist());
     
     // Fetch multiple categories
-    getTrendingBooks().then(setTrending);
+    getTrendingBooks().then(books => {
+        setTrending(books);
+        // Select a random featured book from trending
+        if (books.length > 0) {
+            setFeaturedBook(books[Math.floor(Math.random() * books.length)]);
+        }
+    });
     
     // New Sections
-    getTrendingBooks("subject:fiction", true).then(setNewBooks); // New Releases
+    getTrendingBooks("subject:fiction", true).then(setNewBooks); 
     getTrendingBooks("bestsellers").then(setBestsellerBooks); 
+    
+    // Specific requests
+    getTrendingBooks("subject:self-help").then(setSelfHelpBooks);
     getTrendingBooks("subject:romance").then(setRomanceBooks);
     getTrendingBooks("subject:thriller").then(setThrillerBooks);
 
@@ -55,6 +70,9 @@ function App() {
     getTrendingBooks("subject:science fiction").then(setScifiBooks);
     getTrendingBooks("subject:fantasy").then(setFantasyBooks);
     getTrendingBooks("subject:classics").then(setClassicBooks);
+    
+    // New Indian Dataset Collection
+    getTrendingBooks("subject:Indian literature").then(setIndianBooks);
 
     const handleWishlistUpdate = () => setWishlist(getWishlist());
     window.addEventListener('wishlist-updated', handleWishlistUpdate);
@@ -91,6 +109,7 @@ function App() {
     } catch (err: any) {
       console.error(err);
       setError(err.message || "The spirits are quiet. We could not divine recommendations at this moment. Please try again.");
+      setView('search'); 
     } finally {
       setLoading(false);
     }
@@ -98,39 +117,33 @@ function App() {
 
   const handleSearch = async (query: string) => {
     if (!query.trim()) return;
+    setView('search');
     setLoading(true);
     setError(null);
-    setHasSearched(true);
-    setSearchResults([]); // Clear previous results immediately
+    setSearchQuery(query);
+    setSearchInputValue(query); 
+    setSearchResults([]); 
 
-    // 1. Fire Fast Search (Google Books API)
     try {
       const books = await searchBooks(query);
+      if (books.length === 0) {
+          setError("No tomes found matching this inquiry. Perhaps try a different spelling?");
+      }
       setSearchResults(books);
-      setLoading(false); 
-      
-      // Auto-scroll to results
-      setTimeout(() => {
-        const el = document.getElementById('search-row');
-        if(el) el.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
-
-      // 2. Fire Background Trending Update (Gemini AI)
-      getTrendingBooks(query).then(newTrends => {
-          if (newTrends && newTrends.length > 0) {
-             setTrending(newTrends);
-             setTrendingTitle(`Trending related to "${query}"`);
-          }
-      }).catch(err => console.warn("Background trending update failed", err));
-
     } catch (e: any) {
       console.error(e);
-      setError("Could not find books. Please check your connection.");
+      setError(e.message || "Could not find books. Please check your connection.");
+    } finally {
       setLoading(false);
     }
   };
 
   const handleBookClick = (book: Book) => setSelectedBook(book);
+
+  const discoveryTags = [
+    "Fiction", "Mystery", "Thriller", "Romance", "Fantasy", "Sci-Fi", "Horror", "History", 
+    "Biography", "Science", "Psychology", "Philosophy", "Business", "Self-Help", "Poetry"
+  ];
 
   if (view === 'curate') {
     return (
@@ -157,131 +170,196 @@ function App() {
     );
   }
 
-  return (
-    <div className="min-h-screen text-white font-sans overflow-x-hidden relative">
-      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-        <img 
-          src="https://images.unsplash.com/photo-1481627834876-b7833e8f5570?q=80&w=2400&auto=format&fit=crop" 
-          alt="Atmospheric Library" 
-          className="w-full h-full object-cover will-change-transform"
-          style={{ 
-            transform: `scale(1.1) translateY(${scrollY * 0.05}px)`,
-            filter: `brightness(${Math.max(0.4, 1 - scrollY * 0.001)}) blur(${Math.min(scrollY * 0.005, 3)}px)`
-          }}
-        />
-        <div className="absolute inset-0 bg-black/80 mix-blend-multiply" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-90" />
-      </div>
+  // --- MAIN RENDER ---
 
+  return (
+    <div className="min-h-screen text-white font-sans overflow-x-hidden relative bg-[#0a0a0c]">
+      
       <Navbar 
+        activeView={view}
         onHome={() => {
-            setSearchResults([]);
-            setError(null);
-            setHasSearched(false);
-            getTrendingBooks().then(books => {
-                setTrending(books);
-                setTrendingTitle("Trending on Atmosphera");
-            });
+            setView('home');
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }} 
+        onSearchClick={() => {
+            setView('search');
+            setSearchQuery(""); 
+            setSearchInputValue(""); 
+            setSearchResults([]);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
         onWishlist={() => {
-            const el = document.getElementById('wishlist-row');
-            if(el) el.scrollIntoView({ behavior: 'smooth' });
+            if (view !== 'home') setView('home');
+            setTimeout(() => {
+              const el = document.getElementById('wishlist-row');
+              if(el) el.scrollIntoView({ behavior: 'smooth' });
+            }, 100);
         }}
         onSearch={handleSearch}
+        searchValue={searchInputValue}
+        onSearchChange={setSearchInputValue}
       />
 
       <div className="relative z-10">
-        <Hero 
-            onStart={() => {
-                setView('curate');
-                setError(null);
-            }} 
-            onBrowse={() => {
-                const el = document.getElementById('browse-start');
-                if(el) el.scrollIntoView({ behavior: 'smooth' });
-            }}
-        />
+        
+        {/* SEARCH VIEW */}
+        {view === 'search' ? (
+          <div className="pt-32 px-6 md:px-12 pb-20 min-h-screen animate-fade-in">
+             {/* ... Search implementation remains same ... */}
+             <div className="flex flex-col items-center md:items-start mb-8 gap-4">
+                 <h1 className="text-4xl md:text-5xl font-serif font-bold text-center md:text-left">
+                    {searchQuery ? `Results for "${searchQuery}"` : "Discover Archives"}
+                 </h1>
+                 
+                 <div className="w-full max-w-xl relative md:hidden">
+                    <input 
+                      type="text" 
+                      placeholder="Type to search..."
+                      value={searchInputValue}
+                      onChange={(e) => setSearchInputValue(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleSearch(searchInputValue)}
+                      className="w-full bg-white/10 border border-slate-600 rounded-xl px-5 py-4 text-white focus:outline-none focus:border-accent-gold shadow-lg"
+                    />
+                    <button 
+                       onClick={() => handleSearch(searchInputValue)}
+                       className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-white"
+                    >
+                       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                    </button>
+                 </div>
+             </div>
 
-        <div className="pb-20 space-y-8" id="browse-start">
-            
-            {error && (
-              <div className="mx-6 md:mx-12 mt-8 p-4 bg-red-500/10 border border-red-500/50 rounded-lg flex items-center justify-between animate-fade-in backdrop-blur-md">
-                <div className="flex items-center gap-3">
-                  <svg className="w-6 h-6 text-red-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                  <span className="text-slate-200 text-sm md:text-base">{error}</span>
+             {loading && (
+                <div className="flex flex-col items-center justify-center h-64 gap-4">
+                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-accent-gold"></div>
+                    <p className="text-slate-400 font-serif italic">Searching the archives...</p>
                 </div>
-                <button onClick={() => setError(null)} className="text-slate-400 hover:text-white p-2">
-                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                </button>
-              </div>
-            )}
+             )}
 
-            {loading && (
-            <div className="flex flex-col items-center justify-center h-40 gap-4">
-                <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-accent-gold"></div>
-                <p className="text-slate-400 text-sm">Searching the archives...</p>
-            </div>
-            )}
-
-            <div id="search-row">
-              {searchResults.length > 0 ? (
-                <BookRow title="Search Results" books={searchResults} onBookClick={handleBookClick} />
-              ) : hasSearched && !loading && !error && (
-                <div className="flex flex-col items-center justify-center py-12 text-slate-500">
-                    <svg className="w-16 h-16 mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
-                    <p className="text-lg">No books found matching that query.</p>
+             {!loading && searchResults.length > 0 && (
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6 md:gap-8">
+                   {searchResults.map((book, i) => (
+                      <div key={i} className="aspect-[2/3]">
+                         <BookCard book={book} index={i} onClick={() => handleBookClick(book)} />
+                      </div>
+                   ))}
                 </div>
-              )}
+             )}
+
+             {!loading && !searchResults.length && searchQuery && !error && (
+               <div className="text-center py-20 flex flex-col items-center">
+                  <div className="w-20 h-20 bg-slate-800/50 rounded-full flex items-center justify-center mb-6">
+                      <svg className="w-10 h-10 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+                  </div>
+                  <p className="text-xl text-slate-400">No books found matching this inquiry.</p>
+                  <button onClick={() => { setSearchQuery(""); setSearchInputValue(""); }} className="mt-4 text-accent-gold hover:underline">Clear Search</button>
+               </div>
+             )}
+
+             {!loading && !searchResults.length && !searchQuery && (
+               <div className="max-w-4xl mx-auto py-8">
+                  <p className="text-slate-400 mb-8 text-lg">Select a genre to explore the archives.</p>
+                  <div className="flex flex-wrap gap-4">
+                    {discoveryTags.map(tag => (
+                      <button 
+                        key={tag}
+                        onClick={() => handleSearch(tag)}
+                        className="px-6 py-3 rounded-full bg-white/5 border border-white/10 hover:bg-accent-gold hover:text-black hover:border-accent-gold transition-all duration-300 text-lg font-serif"
+                      >
+                        {tag}
+                      </button>
+                    ))}
+                  </div>
+               </div>
+             )}
+
+             {error && (
+                <div className="text-center py-20 flex flex-col items-center animate-fade-in">
+                    <div className="text-4xl mb-4">📜</div>
+                    <p className="text-xl text-red-300 mb-6 font-serif">{error}</p>
+                    <button 
+                        onClick={() => handleSearch(searchQuery || 'Fiction')}
+                        className="px-6 py-2 bg-slate-800 hover:bg-slate-700 rounded-full border border-slate-600 transition-colors"
+                    >
+                        Try Again
+                    </button>
+                </div>
+             )}
+          </div>
+        ) : (
+          /* HOME VIEW */
+          <>
+            <Hero 
+                featuredBook={featuredBook}
+                onStart={() => {
+                    setView('curate');
+                    setError(null);
+                }} 
+                onBrowse={() => {
+                    const el = document.getElementById('browse-start');
+                    if(el) el.scrollIntoView({ behavior: 'smooth' });
+                }}
+                onMoreInfo={handleBookClick}
+            />
+
+            {/* Negative margin to pull rows up into hero gradient (Netflix Style) */}
+            <div className="pb-20 space-y-4 -mt-20 relative z-20" id="browse-start">
+                
+                {recommendations.length > 0 && (
+                <div id="recommendations-row">
+                    <BookRow title={recTitle} books={recommendations} onBookClick={handleBookClick} />
+                </div>
+                )}
+
+                <div id="wishlist-row">
+                {wishlist.length > 0 && (
+                    <BookRow title="My List" books={wishlist} onBookClick={handleBookClick} />
+                )}
+                </div>
+
+                <BookRow title={trendingTitle} books={trending} onBookClick={handleBookClick} />
+
+                {newBooks.length > 0 && (
+                    <BookRow title="New Releases" books={newBooks} onBookClick={handleBookClick} />
+                )}
+                
+                {indianBooks.length > 0 && (
+                    <BookRow title="Indian Heritage & Stories" books={indianBooks} onBookClick={handleBookClick} />
+                )}
+
+                {selfHelpBooks.length > 0 && (
+                    <BookRow title="Growth & Mindset" books={selfHelpBooks} onBookClick={handleBookClick} />
+                )}
+
+                {bestsellerBooks.length > 0 && (
+                    <BookRow title="Global Bestsellers" books={bestsellerBooks} onBookClick={handleBookClick} />
+                )}
+                {romanceBooks.length > 0 && (
+                    <BookRow title="Romance & Heartbreak" books={romanceBooks} onBookClick={handleBookClick} />
+                )}
+                {thrillerBooks.length > 0 && (
+                    <BookRow title="Thrillers & Mystery" books={thrillerBooks} onBookClick={handleBookClick} />
+                )}
+                {fantasyBooks.length > 0 && (
+                    <BookRow title="Epic Fantasy" books={fantasyBooks} onBookClick={handleBookClick} />
+                )}
+                {gothicBooks.length > 0 && (
+                    <BookRow title="Gothic & Eerie" books={gothicBooks} onBookClick={handleBookClick} />
+                )}
+                {scifiBooks.length > 0 && (
+                    <BookRow title="Future Worlds" books={scifiBooks} onBookClick={handleBookClick} />
+                )}
+                {classicBooks.length > 0 && (
+                    <BookRow title="Timeless Classics" books={classicBooks} onBookClick={handleBookClick} />
+                )}
+
+                <div className="mt-20 border-t border-white/10 pt-10 text-center text-slate-500 text-sm pb-10 bg-black/40 backdrop-blur-sm">
+                  <p>Powered by Google Gemini 2.5 • Flash, Pro & Imagen</p>
+                  <p className="mt-2">Atmosphera © 2025</p>
+                </div>
             </div>
-
-            {recommendations.length > 0 && (
-            <div id="recommendations-row">
-                <BookRow title={recTitle} books={recommendations} onBookClick={handleBookClick} />
-            </div>
-            )}
-
-            <div id="wishlist-row">
-            {wishlist.length > 0 && (
-                <BookRow title="My List" books={wishlist} onBookClick={handleBookClick} />
-            )}
-            </div>
-
-            <BookRow title={trendingTitle} books={trending} onBookClick={handleBookClick} />
-
-            {/* NEW COLLECTIONS */}
-            {newBooks.length > 0 && (
-                <BookRow title="New Releases" books={newBooks} onBookClick={handleBookClick} />
-            )}
-            {bestsellerBooks.length > 0 && (
-                <BookRow title="Global Bestsellers" books={bestsellerBooks} onBookClick={handleBookClick} />
-            )}
-            {romanceBooks.length > 0 && (
-                <BookRow title="Romance & Heartbreak" books={romanceBooks} onBookClick={handleBookClick} />
-            )}
-            {thrillerBooks.length > 0 && (
-                <BookRow title="Thrillers & Mystery" books={thrillerBooks} onBookClick={handleBookClick} />
-            )}
-            
-            {/* EXISTING COLLECTIONS */}
-            {fantasyBooks.length > 0 && (
-                <BookRow title="Epic Fantasy" books={fantasyBooks} onBookClick={handleBookClick} />
-            )}
-            {gothicBooks.length > 0 && (
-                <BookRow title="Gothic & Eerie" books={gothicBooks} onBookClick={handleBookClick} />
-            )}
-            {scifiBooks.length > 0 && (
-                <BookRow title="Future Worlds" books={scifiBooks} onBookClick={handleBookClick} />
-            )}
-            {classicBooks.length > 0 && (
-                <BookRow title="Timeless Classics" books={classicBooks} onBookClick={handleBookClick} />
-            )}
-
-            <div className="mt-20 border-t border-white/10 pt-10 text-center text-slate-500 text-sm pb-10 bg-black/40 backdrop-blur-sm">
-              <p>Powered by Google Gemini 2.5 • Flash, Pro & Imagen</p>
-              <p className="mt-2">Atmosphera © 2025</p>
-            </div>
-        </div>
+          </>
+        )}
       </div>
 
       <BookDetailModal 

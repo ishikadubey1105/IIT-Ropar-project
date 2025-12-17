@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { generateMoodImage } from '../services/gemini';
+import React, { useState, useEffect, useMemo } from 'react';
 
 interface BookCoverProps {
   isbn?: string;
@@ -8,8 +7,58 @@ interface BookCoverProps {
   moodColor: string;
   className?: string;
   showText?: boolean;
-  coverUrl?: string; // NEW PROP
+  coverUrl?: string;
 }
+
+// --- Procedural Art Components ---
+
+const TextureOverlay = () => (
+  <div 
+    className="absolute inset-0 opacity-20 pointer-events-none mix-blend-overlay"
+    style={{ 
+      backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` 
+    }}
+  />
+);
+
+const PatternGeometric = ({ color }: { color: string }) => (
+  <>
+    <div className="absolute -top-12 -right-12 w-48 h-48 rounded-full border-[20px] border-white/5 opacity-50" />
+    <div className="absolute top-20 -left-10 w-32 h-32 rounded-full bg-white/10 blur-2xl" />
+    <div className="absolute bottom-10 right-4 w-16 h-16 border border-white/20 rotate-45" />
+    <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/5 to-transparent opacity-30" />
+  </>
+);
+
+const PatternOrganic = ({ color }: { color: string }) => (
+  <>
+    <div className="absolute inset-0 opacity-40 mix-blend-multiply" style={{ backgroundImage: `radial-gradient(circle at 70% 20%, ${color}, transparent 60%)` }} />
+    <svg className="absolute bottom-[-10%] left-[-10%] w-[120%] h-64 opacity-10 text-white transform rotate-3" viewBox="0 0 100 100" preserveAspectRatio="none">
+       <path d="M0 100 C 30 20 70 20 100 100 Z" fill="currentColor" />
+    </svg>
+    <div className="absolute top-1/4 right-0 w-32 h-32 bg-white/5 rounded-full blur-3xl" />
+  </>
+);
+
+const PatternMinimal = ({ title }: { title: string }) => (
+  <>
+     <div className="absolute -top-6 -right-6 text-[10rem] font-serif opacity-5 font-bold leading-none select-none overflow-hidden text-white" style={{ fontFamily: '"Times New Roman", serif' }}>
+       {title.charAt(0)}
+     </div>
+     <div className="absolute inset-4 border border-white/10" />
+     <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/10 to-transparent" />
+  </>
+);
+
+const PatternAbstract = ({ color }: { color: string }) => (
+    <>
+       <div className="absolute inset-0 opacity-10" style={{ 
+           backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 20px)' 
+       }} />
+       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-40 border border-white/10 rounded-full" />
+       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 border border-white/5 rotate-45" />
+    </>
+);
 
 export const BookCover: React.FC<BookCoverProps> = ({ 
   isbn, 
@@ -23,10 +72,14 @@ export const BookCover: React.FC<BookCoverProps> = ({
   const [src, setSrc] = useState<string | null>(coverUrl || null);
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(!coverUrl);
-  // Removed isGenerated state as we no longer auto-generate covers
+
+  // Deterministically choose a style based on the title string
+  const styleVariant = useMemo(() => {
+    const hash = title.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return hash % 4; // 0: Geometric, 1: Organic, 2: Minimal, 3: Abstract
+  }, [title]);
 
   useEffect(() => {
-    // If a direct URL is provided (e.g. from Google Books Search), use it immediately
     if (coverUrl) {
         setSrc(coverUrl);
         setLoading(false);
@@ -54,7 +107,7 @@ export const BookCover: React.FC<BookCoverProps> = ({
     const fetchCover = async () => {
       let foundUrl: string | null = null;
 
-      // 1. Priority: OpenLibrary (High Resolution, relies on ISBN)
+      // 1. Priority: OpenLibrary
       if (isbn) {
         const cleanId = isbn.replace(/[^0-9X]/gi, '');
         const olUrl = `https://covers.openlibrary.org/b/isbn/${cleanId}-L.jpg?default=false`;
@@ -63,10 +116,10 @@ export const BookCover: React.FC<BookCoverProps> = ({
         }
       }
 
-      // 2. Fallback: Google Books Search API (Title + Author)
+      // 2. Fallback: Google Books Search
       if (!foundUrl) {
         try {
-          const query = `intitle:${encodeURIComponent(title)}`;
+          const query = `intitle:${encodeURIComponent(title)} ${author ? `inauthor:${encodeURIComponent(author)}` : ''}`;
           const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${query}&maxResults=1`);
           if (res.ok) {
             const data = await res.json();
@@ -81,9 +134,6 @@ export const BookCover: React.FC<BookCoverProps> = ({
         }
       }
 
-      // 3. Removed AI Generation Fallback to prevent API 500 Errors on list render.
-      // The CSS fallback below is sufficient and more performant.
-
       if (isMounted) {
         if (foundUrl) {
           setSrc(foundUrl);
@@ -97,32 +147,47 @@ export const BookCover: React.FC<BookCoverProps> = ({
 
     fetchCover();
     return () => { isMounted = false; };
-  }, [isbn, title, author, moodColor, coverUrl]);
+  }, [isbn, title, author, coverUrl]);
 
-  // Fallback / Loading UI
+  // Fallback UI (Procedural Art)
   if (error || (!src && !loading)) {
     return (
       <div 
-        className={`relative overflow-hidden flex flex-col justify-between p-6 ${className} group transition-all duration-500`} 
+        className={`relative overflow-hidden flex flex-col justify-end p-6 ${className} group transition-all duration-500 bg-slate-900`} 
         style={{ 
-          background: `linear-gradient(135deg, ${moodColor} 0%, #0f172a 120%)`,
-          boxShadow: 'inset 0 0 20px rgba(0,0,0,0.5)'
+          background: `linear-gradient(135deg, ${moodColor}dd 0%, #0f172a 100%)`,
+          boxShadow: 'inset 2px 0 5px rgba(255,255,255,0.05), inset -2px 0 10px rgba(0,0,0,0.5)'
         }}
       >
-        <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] mix-blend-overlay" />
-        <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-3xl transform translate-x-10 -translate-y-10" />
-        <div className="absolute left-3 top-0 bottom-0 w-[1px] bg-white/10" />
+        <TextureOverlay />
+        
+        {/* Book Spine Shadow Effect */}
+        <div className="absolute left-0 top-0 bottom-0 w-3 bg-gradient-to-r from-white/10 to-transparent z-10" />
+        <div className="absolute left-3 top-0 bottom-0 w-[1px] bg-black/20 z-10" />
+
+        {/* Render Procedural Pattern */}
+        {styleVariant === 0 && <PatternGeometric color={moodColor} />}
+        {styleVariant === 1 && <PatternOrganic color={moodColor} />}
+        {styleVariant === 2 && <PatternMinimal title={title} />}
+        {styleVariant === 3 && <PatternAbstract color={moodColor} />}
 
         {showText && (
-          <div className="relative z-10 animate-fade-in flex flex-col h-full">
-            <div className="mb-auto opacity-50">
-               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+          <div className="relative z-20 animate-fade-in flex flex-col h-full justify-between pointer-events-none">
+            {/* Top Decoration */}
+            <div className="flex justify-between items-start opacity-70">
+                <div className="w-8 h-[1px] bg-white/50"></div>
+                <div className="text-[9px] font-mono tracking-[0.2em] uppercase text-white/80">Atmosphera</div>
             </div>
-            <div>
-              <h3 className="font-serif font-bold text-white leading-tight text-xl drop-shadow-lg line-clamp-3 tracking-wide">
+
+            <div className="mt-auto">
+              <h3 
+                className="font-serif font-bold text-white leading-[1.1] text-xl md:text-2xl drop-shadow-xl line-clamp-4 tracking-wide mb-3"
+                style={{ textShadow: '0 2px 10px rgba(0,0,0,0.8)' }}
+              >
                 {title}
               </h3>
-              <p className="text-xs text-slate-300 mt-2 font-medium tracking-widest uppercase opacity-80 border-t border-white/20 pt-2 inline-block">
+              <div className="w-12 h-0.5 bg-accent-gold/90 mb-3 rounded-full"></div>
+              <p className="text-xs text-slate-100 font-medium tracking-[0.15em] uppercase opacity-90 line-clamp-1 text-shadow-sm">
                 {author}
               </p>
             </div>
@@ -144,11 +209,6 @@ export const BookCover: React.FC<BookCoverProps> = ({
              <div className="w-8 h-12 border border-white/10 rounded-sm bg-white/5 backdrop-blur-md flex items-center justify-center shadow-2xl">
                 <div className="w-[1px] h-8 bg-white/20" />
              </div>
-             <div className="flex gap-1">
-               <span className="w-1 h-1 rounded-full bg-white/40 animate-bounce" style={{ animationDelay: '0ms' }} />
-               <span className="w-1 h-1 rounded-full bg-white/40 animate-bounce" style={{ animationDelay: '150ms' }} />
-               <span className="w-1 h-1 rounded-full bg-white/40 animate-bounce" style={{ animationDelay: '300ms' }} />
-             </div>
            </div>
         </div>
       )}
@@ -159,7 +219,8 @@ export const BookCover: React.FC<BookCoverProps> = ({
           className={`object-cover w-full h-full transition-all duration-700 ${loading ? 'opacity-0 scale-105' : 'opacity-100 scale-100'}`}
         />
       )}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+      {/* Subtle overlay to ensure text contrast if text is ever overlaid */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
     </div>
   );
 };

@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { Book } from '../types';
+import React, { useState, useEffect } from 'react';
+import { Book, ReadingProgress } from '../types';
 import { MoodVisualizer } from './MoodVisualizer';
-import { setActiveRead } from '../services/storage';
+import { setActiveRead, getActiveRead, getReadingProgress, saveReadingProgress } from '../services/storage';
 import { BookCover } from './BookCover';
 import { CharacterChat } from './CharacterChat';
 
@@ -15,12 +15,54 @@ interface BookDetailModalProps {
 export const BookDetailModal: React.FC<BookDetailModalProps> = ({ book, onClose, onToggleWishlist, isInWishlist }) => {
   const [isShared, setIsShared] = useState(false);
   const [activeTab, setActiveTab] = useState<'details' | 'chat'>('details');
+  const [isActiveRead, setIsActiveRead] = useState(false);
+  const [progress, setProgress] = useState<ReadingProgress | null>(null);
+
+  useEffect(() => {
+    if (book) {
+      const currentActive = getActiveRead();
+      const isCurrent = currentActive?.title === book.title && currentActive?.author === book.author;
+      setIsActiveRead(isCurrent);
+
+      if (isCurrent) {
+        setProgress(getReadingProgress());
+      }
+    }
+  }, [book]);
 
   if (!book) return null;
 
   const handleStartReading = () => {
     setActiveRead(book);
-    onClose();
+    setIsActiveRead(true);
+    setProgress(getReadingProgress()); // Fetch the initialized progress
+  };
+
+  const handleProgressChange = (newPage: number) => {
+    if (!progress) return;
+    const safePage = Math.min(Math.max(0, newPage), progress.totalPages);
+    const newPercentage = Math.round((safePage / progress.totalPages) * 100);
+    
+    const updated: ReadingProgress = {
+      ...progress,
+      currentPage: safePage,
+      percentage: newPercentage,
+      lastUpdated: new Date().toISOString()
+    };
+    
+    setProgress(updated);
+    saveReadingProgress(updated);
+  };
+
+  const handleTotalPagesChange = (newTotal: number) => {
+    if (!progress) return;
+    const updated: ReadingProgress = {
+      ...progress,
+      totalPages: newTotal,
+      percentage: Math.round((progress.currentPage / newTotal) * 100),
+    };
+    setProgress(updated);
+    saveReadingProgress(updated);
   };
 
   const handleShare = async () => {
@@ -128,13 +170,24 @@ export const BookDetailModal: React.FC<BookDetailModalProps> = ({ book, onClose,
             {activeTab === 'details' ? (
                 <>
                 {/* Buttons Row */}
-                <div className="flex flex-col sm:flex-row gap-4 pt-4">
+                <div className="flex flex-col sm:flex-row gap-4 pt-4 flex-wrap">
                 <button 
                     onClick={handleStartReading}
-                    className="flex-1 bg-white text-black font-bold py-4 rounded-xl hover:bg-slate-200 transition-all flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(255,255,255,0.15)] text-lg hover:-translate-y-1 active:scale-95"
+                    disabled={isActiveRead}
+                    className={`flex-1 min-w-[140px] font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(255,255,255,0.15)] text-lg hover:-translate-y-1 active:scale-95
+                      ${isActiveRead ? 'bg-emerald-500 text-white cursor-default hover:translate-y-0 hover:bg-emerald-500' : 'bg-white text-black hover:bg-slate-200'}`}
                 >
-                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                    Mark as Reading
+                    {isActiveRead ? (
+                       <>
+                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                         Currently Reading
+                       </>
+                    ) : (
+                       <>
+                         <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                         Mark as Reading
+                       </>
+                    )}
                 </button>
                 
                 {book.ebookUrl && (
@@ -142,16 +195,26 @@ export const BookDetailModal: React.FC<BookDetailModalProps> = ({ book, onClose,
                     href={book.buyLink || book.ebookUrl} 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="flex-1 bg-accent-gold text-deep-bg font-bold py-4 rounded-xl hover:bg-yellow-500 transition-all flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(212,175,55,0.3)] text-lg hover:-translate-y-1 active:scale-95"
+                    className="flex-1 min-w-[140px] bg-accent-gold text-deep-bg font-bold py-4 rounded-xl hover:bg-yellow-500 transition-all flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(212,175,55,0.3)] text-lg hover:-translate-y-1 active:scale-95"
                     >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
                     {book.saleability === 'FREE' ? 'Read for Free' : 'Get E-Book'}
                     </a>
                 )}
+                
+                <a 
+                  href={`https://www.audible.com/search?keywords=${encodeURIComponent(book.title + ' ' + book.author)}`} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex-1 min-w-[140px] bg-purple-600/20 text-purple-300 border border-purple-500/50 font-bold py-4 rounded-xl hover:bg-purple-600 hover:text-white transition-all flex items-center justify-center gap-3 text-lg hover:-translate-y-1 active:scale-95"
+                >
+                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
+                   Find Audiobook
+                </a>
 
                 <button 
                     onClick={() => onToggleWishlist(book)}
-                    className="flex-1 border-2 border-slate-600 text-slate-200 font-bold py-4 rounded-xl hover:border-white hover:text-white transition-all flex items-center justify-center gap-3 text-lg hover:-translate-y-1 active:scale-95"
+                    className="flex-1 min-w-[140px] border-2 border-slate-600 text-slate-200 font-bold py-4 rounded-xl hover:border-white hover:text-white transition-all flex items-center justify-center gap-3 text-lg hover:-translate-y-1 active:scale-95"
                 >
                     {isInWishlist ? (
                     <>
@@ -168,7 +231,7 @@ export const BookDetailModal: React.FC<BookDetailModalProps> = ({ book, onClose,
 
                 <button 
                     onClick={handleShare}
-                    className={`flex-1 border-2 border-slate-600 text-slate-200 font-bold py-4 rounded-xl hover:border-blue-400 hover:text-blue-400 transition-all flex items-center justify-center gap-3 text-lg hover:-translate-y-1 active:scale-95 ${isShared ? 'border-emerald-500 text-emerald-500' : ''}`}
+                    className={`flex-1 min-w-[140px] border-2 border-slate-600 text-slate-200 font-bold py-4 rounded-xl hover:border-blue-400 hover:text-blue-400 transition-all flex items-center justify-center gap-3 text-lg hover:-translate-y-1 active:scale-95 ${isShared ? 'border-emerald-500 text-emerald-500' : ''}`}
                 >
                     {isShared ? (
                     <>
@@ -184,6 +247,56 @@ export const BookDetailModal: React.FC<BookDetailModalProps> = ({ book, onClose,
                 </button>
                 </div>
                 
+                {/* READING PROGRESS SECTION (NEW) */}
+                {isActiveRead && progress && (
+                  <div className="bg-white/5 p-6 md:p-8 rounded-2xl border border-accent-gold/20 shadow-inner animate-fade-in relative overflow-hidden group">
+                     <div className="absolute top-0 right-0 p-12 bg-accent-gold/5 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
+                     
+                     <div className="flex justify-between items-center mb-6 relative z-10">
+                        <h3 className="text-xl font-serif font-bold text-accent-gold flex items-center gap-2">
+                           <span className="animate-pulse">●</span> Journey Progress
+                        </h3>
+                        <span className="text-4xl font-bold text-white tracking-tighter">{progress.percentage}%</span>
+                     </div>
+
+                     <div className="relative h-4 bg-slate-800 rounded-full mb-8 overflow-hidden">
+                        <div 
+                           className="absolute top-0 left-0 h-full bg-gradient-to-r from-accent-gold to-yellow-200 transition-all duration-500 ease-out rounded-full shadow-[0_0_15px_rgba(212,175,55,0.5)]"
+                           style={{ width: `${progress.percentage}%` }}
+                        ></div>
+                     </div>
+
+                     <div className="flex flex-col md:flex-row gap-6 items-center">
+                        <div className="flex-1 w-full">
+                           <input 
+                              type="range" 
+                              min="0" 
+                              max={progress.totalPages} 
+                              value={progress.currentPage} 
+                              onChange={(e) => handleProgressChange(parseInt(e.target.value))}
+                              className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-accent-gold hover:accent-yellow-400"
+                           />
+                        </div>
+                        <div className="flex items-center gap-3 bg-black/30 px-4 py-2 rounded-lg border border-white/10">
+                           <span className="text-slate-400 text-xs uppercase tracking-wide">Page</span>
+                           <input 
+                              type="number" 
+                              value={progress.currentPage}
+                              onChange={(e) => handleProgressChange(parseInt(e.target.value))}
+                              className="w-16 bg-transparent text-white font-bold text-center border-b border-slate-600 focus:border-accent-gold focus:outline-none"
+                           />
+                           <span className="text-slate-500">of</span>
+                           <input 
+                              type="number" 
+                              value={progress.totalPages}
+                              onChange={(e) => handleTotalPagesChange(parseInt(e.target.value))}
+                              className="w-16 bg-transparent text-slate-300 font-medium text-center border-b border-transparent hover:border-slate-600 focus:border-accent-gold focus:outline-none transition-colors"
+                           />
+                        </div>
+                     </div>
+                  </div>
+                )}
+
                 <div className="bg-white/5 p-8 rounded-2xl border-l-4 border-accent-gold backdrop-blur-sm">
                 <p className="text-xl md:text-2xl text-slate-200 leading-relaxed italic font-serif opacity-90">"{book.excerpt}"</p>
                 </div>

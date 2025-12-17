@@ -37,6 +37,14 @@ export interface Book {
   epubAvailable?: boolean;
 }
 
+export interface ReadingProgress {
+  bookTitle: string; 
+  currentPage: number;
+  totalPages: number;
+  percentage: number;
+  lastUpdated: string;
+}
+
 export interface ChatMessage {
   role: 'user' | 'model';
   text: string;
@@ -102,6 +110,7 @@ export interface UserPreferences {
   setting: WorldSetting | null;
   language: string;
   specificInterest: string;
+  preferredFormat: 'text' | 'audio';
 }
 
 export interface StepProps {
