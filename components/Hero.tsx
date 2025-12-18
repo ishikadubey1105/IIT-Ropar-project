@@ -93,10 +93,17 @@ export const Hero: React.FC<HeroProps> = ({ onStart, onBrowse, featuredBook, onM
             Curate My Mood
           </button>
           <button 
-            onClick={() => onMoreInfo(featuredBook)} 
+            onClick={onBrowse} 
             className="px-10 py-4 rounded bg-slate-800/60 text-white font-bold text-lg backdrop-blur-xl border border-white/10 hover:bg-slate-700 transition-all flex items-center justify-center gap-3"
           >
-            Explore Depth
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" /></svg>
+            Browse All
+          </button>
+          <button 
+            onClick={() => onMoreInfo(featuredBook)} 
+            className="px-6 py-4 text-slate-400 hover:text-white transition-colors text-sm font-bold uppercase tracking-widest flex items-center gap-2"
+          >
+            View Details
           </button>
         </div>
       </div>

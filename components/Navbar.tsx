@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Book } from '../types';
 import { getActiveRead } from '../services/storage';
@@ -7,6 +8,7 @@ interface NavbarProps {
   onHome: () => void;
   onWishlist: () => void;
   onSearchClick: () => void;
+  onGenresClick?: () => void;
   onSearch: (q: string) => void;
   searchValue: string;
   onSearchChange: (val: string) => void;
@@ -18,6 +20,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onHome, 
   onWishlist, 
   onSearchClick, 
+  onGenresClick,
   onSearch, 
   searchValue,
   onSearchChange,
@@ -68,6 +71,12 @@ export const Navbar: React.FC<NavbarProps> = ({
             className={`transition-colors border-b-2 pb-1 ${activeView === 'home' ? 'text-white border-accent-gold' : 'border-transparent hover:text-white hover:border-accent-gold/50'}`}
           >
             Home
+          </button>
+          <button 
+            onClick={onGenresClick} 
+            className="hover:text-white transition-colors border-b-2 border-transparent hover:border-accent-gold pb-1"
+          >
+            Genres
           </button>
           <button 
             onClick={onSearchClick} 

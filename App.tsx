@@ -7,12 +7,13 @@ import { BookDetailModal } from './components/BookDetailModal';
 import { Questionnaire } from './components/Questionnaire';
 import { LiveLibrarian } from './components/LiveLibrarian';
 import { BookCard } from './components/BookCard';
+import { GenresView } from './components/GenresView';
 import { getBookRecommendations, searchBooks, getTrendingBooks, fetchWebTrendingBooks } from './services/gemini';
 import { getWishlist, toggleWishlist, isInWishlist } from './services/storage';
 import { UserPreferences, Book } from './types';
 
 function App() {
-  const [view, setView] = useState<'home' | 'curate' | 'search'>('home');
+  const [view, setView] = useState<'home' | 'curate' | 'search' | 'genres'>('home');
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const [currentPrefs, setCurrentPrefs] = useState<UserPreferences | null>(null);
   
@@ -143,12 +144,17 @@ function App() {
     }
   };
 
+  const handleGenreSelect = (genre: string) => {
+    handleSearch(`subject:${genre}`);
+  };
+
   return (
     <div className="min-h-screen text-white font-sans overflow-x-hidden relative bg-black">
       <Navbar 
-        activeView={view}
+        activeView={view === 'genres' ? 'search' : view}
         onHome={() => setView('home')} 
         onSearchClick={() => setView('search')}
+        onGenresClick={() => setView('genres')}
         onWishlist={() => {
             if (view !== 'home') setView('home');
             setTimeout(() => document.getElementById('wishlist-row')?.scrollIntoView({ behavior: 'smooth' }), 100);
@@ -163,6 +169,8 @@ function App() {
           <div className="pt-32 min-h-screen flex items-center justify-center">
              <Questionnaire onComplete={handleCurateComplete} />
           </div>
+        ) : view === 'genres' ? (
+          <GenresView onGenreSelect={handleGenreSelect} onBack={() => setView('home')} />
         ) : view === 'search' ? (
           <div className="pt-32 px-6 md:px-16 pb-20 min-h-screen">
              <h1 className="text-3xl font-serif font-bold mb-8">Results for "{searchQuery}"</h1>
@@ -178,7 +186,7 @@ function App() {
             <Hero 
                 featuredBook={featuredBook}
                 onStart={() => setView('curate')} 
-                onBrowse={() => {}}
+                onBrowse={() => setView('genres')}
                 onMoreInfo={setSelectedBook}
             />
 
