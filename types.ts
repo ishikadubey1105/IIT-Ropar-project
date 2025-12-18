@@ -15,6 +15,7 @@ export interface Book {
   foodPairing?: string;
   language?: string;
   coverUrl?: string;
+  sources?: WebSource[];
   
   // Enhanced Metadata
   atmosphericRole?: string; 
@@ -147,7 +148,6 @@ export interface StepProps {
   data: UserPreferences;
 }
 
-// Added TrainingSignal interface to fix import errors in NeuralLab.tsx
 export interface TrainingSignal {
   id: string;
   bookTitle: string;

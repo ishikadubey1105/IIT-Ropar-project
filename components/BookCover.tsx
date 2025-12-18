@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 
 interface BookCoverProps {
@@ -9,8 +10,6 @@ interface BookCoverProps {
   showText?: boolean;
   coverUrl?: string;
 }
-
-// --- Procedural Art Components ---
 
 const TextureOverlay = () => (
   <div 
@@ -73,10 +72,9 @@ export const BookCover: React.FC<BookCoverProps> = ({
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(!coverUrl);
 
-  // Deterministically choose a style based on the title string
   const styleVariant = useMemo(() => {
     const hash = title.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    return hash % 4; // 0: Geometric, 1: Organic, 2: Minimal, 3: Abstract
+    return hash % 4;
   }, [title]);
 
   useEffect(() => {
@@ -106,8 +104,6 @@ export const BookCover: React.FC<BookCoverProps> = ({
 
     const fetchCover = async () => {
       let foundUrl: string | null = null;
-
-      // 1. Priority: OpenLibrary
       if (isbn) {
         const cleanId = isbn.replace(/[^0-9X]/gi, '');
         const olUrl = `https://covers.openlibrary.org/b/isbn/${cleanId}-L.jpg?default=false`;
@@ -115,8 +111,6 @@ export const BookCover: React.FC<BookCoverProps> = ({
           foundUrl = olUrl;
         }
       }
-
-      // 2. Fallback: Google Books Search
       if (!foundUrl) {
         try {
           const query = `intitle:${encodeURIComponent(title)} ${author ? `inauthor:${encodeURIComponent(author)}` : ''}`;
@@ -129,27 +123,21 @@ export const BookCover: React.FC<BookCoverProps> = ({
               foundUrl = thumb.replace(/^http:\/\//i, 'https://');
             }
           }
-        } catch (e) {
-          console.warn("Cover fetch failed for", title);
-        }
+        } catch (e) {}
       }
-
       if (isMounted) {
         if (foundUrl) {
           setSrc(foundUrl);
-          setError(false);
         } else {
           setError(true);
         }
         setLoading(false);
       }
     };
-
     fetchCover();
     return () => { isMounted = false; };
   }, [isbn, title, author, coverUrl]);
 
-  // Fallback UI (Procedural Art)
   if (error || (!src && !loading)) {
     return (
       <div 
@@ -160,36 +148,22 @@ export const BookCover: React.FC<BookCoverProps> = ({
         }}
       >
         <TextureOverlay />
-        
-        {/* Book Spine Shadow Effect */}
         <div className="absolute left-0 top-0 bottom-0 w-3 bg-gradient-to-r from-white/10 to-transparent z-10" />
         <div className="absolute left-3 top-0 bottom-0 w-[1px] bg-black/20 z-10" />
-
-        {/* Render Procedural Pattern */}
         {styleVariant === 0 && <PatternGeometric color={moodColor} />}
         {styleVariant === 1 && <PatternOrganic color={moodColor} />}
         {styleVariant === 2 && <PatternMinimal title={title} />}
         {styleVariant === 3 && <PatternAbstract color={moodColor} />}
-
         {showText && (
           <div className="relative z-20 animate-fade-in flex flex-col h-full justify-between pointer-events-none">
-            {/* Top Decoration */}
             <div className="flex justify-between items-start opacity-70">
                 <div className="w-8 h-[1px] bg-white/50"></div>
                 <div className="text-[9px] font-mono tracking-[0.2em] uppercase text-white/80">Atmosphera</div>
             </div>
-
             <div className="mt-auto">
-              <h3 
-                className="font-serif font-bold text-white leading-[1.1] text-xl md:text-2xl drop-shadow-xl line-clamp-4 tracking-wide mb-3"
-                style={{ textShadow: '0 2px 10px rgba(0,0,0,0.8)' }}
-              >
-                {title}
-              </h3>
+              <h3 className="font-serif font-bold text-white leading-[1.1] text-xl md:text-2xl drop-shadow-xl line-clamp-4 tracking-wide mb-3" style={{ textShadow: '0 2px 10px rgba(0,0,0,0.8)' }}>{title}</h3>
               <div className="w-12 h-0.5 bg-accent-gold/90 mb-3 rounded-full"></div>
-              <p className="text-xs text-slate-100 font-medium tracking-[0.15em] uppercase opacity-90 line-clamp-1 text-shadow-sm">
-                {author}
-              </p>
+              <p className="text-xs text-slate-100 font-medium tracking-[0.15em] uppercase opacity-90 line-clamp-1 text-shadow-sm">{author}</p>
             </div>
           </div>
         )}
@@ -198,29 +172,33 @@ export const BookCover: React.FC<BookCoverProps> = ({
   }
 
   return (
-    <div className={`relative bg-slate-800 ${className} overflow-hidden shadow-2xl`}>
+    <div className={`relative bg-slate-900 ${className} overflow-hidden shadow-2xl transition-all duration-500`}>
       {loading && (
-        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center overflow-hidden bg-slate-900">
-           <div 
-             className="absolute inset-0 opacity-20 blur-3xl animate-pulse-slow"
-             style={{ background: `radial-gradient(circle at center, ${moodColor}, transparent)` }}
-           />
-           <div className="relative z-10 flex flex-col items-center gap-3">
-             <div className="w-8 h-12 border border-white/10 rounded-sm bg-white/5 backdrop-blur-md flex items-center justify-center shadow-2xl">
-                <div className="w-[1px] h-8 bg-white/20" />
-             </div>
-           </div>
+        <div className="absolute inset-0 z-20 overflow-hidden bg-slate-900 flex items-center justify-center">
+          <div 
+            className="absolute inset-0 opacity-60 blur-[100px] animate-pulse-slow"
+            style={{ background: `radial-gradient(circle at center, ${moodColor}, transparent 70%)` }}
+          />
+          <div className="absolute inset-0 overflow-hidden">
+             <div className="w-full h-full bg-gradient-to-r from-transparent via-white/[0.15] to-transparent -skew-x-[20deg] animate-shimmer scale-150" />
+          </div>
+          <div className="relative z-30 flex flex-col items-center gap-3">
+             <div className="w-10 h-10 border-2 border-accent-gold/20 border-t-accent-gold rounded-full animate-spin" />
+             <span className="text-[9px] text-accent-gold/60 font-mono tracking-[0.3em] uppercase">Archival Sync</span>
+          </div>
+          <div className="absolute bottom-0 left-0 w-full h-1 bg-white/5 overflow-hidden">
+             <div className="h-full bg-accent-gold animate-[shimmer_2s_infinite_linear]" style={{ width: '60%', boxShadow: `0 0 20px ${moodColor}` }} />
+          </div>
         </div>
       )}
       {src && (
         <img
           src={src}
           alt={title}
-          className={`object-cover w-full h-full transition-all duration-700 ${loading ? 'opacity-0 scale-105' : 'opacity-100 scale-100'}`}
+          className={`object-cover w-full h-full transition-all duration-1000 ${loading ? 'opacity-0 scale-110 blur-xl' : 'opacity-100 scale-100 blur-0'}`}
         />
       )}
-      {/* Subtle overlay to ensure text contrast if text is ever overlaid */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
     </div>
   );
 };

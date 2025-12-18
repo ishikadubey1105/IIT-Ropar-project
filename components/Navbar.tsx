@@ -12,7 +12,7 @@ interface NavbarProps {
   onSearch: (q: string) => void;
   searchValue: string;
   onSearchChange: (val: string) => void;
-  activeView: 'home' | 'curate' | 'search';
+  activeView: 'home' | 'curate' | 'search' | 'genres';
   className?: string;
 }
 
@@ -74,7 +74,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
           <button 
             onClick={onGenresClick} 
-            className="hover:text-white transition-colors border-b-2 border-transparent hover:border-accent-gold pb-1"
+            className={`transition-colors border-b-2 pb-1 ${activeView === 'genres' ? 'text-white border-accent-gold' : 'border-transparent hover:text-white hover:border-accent-gold/50'}`}
           >
             Genres
           </button>

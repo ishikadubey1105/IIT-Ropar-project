@@ -173,6 +173,27 @@ export const BookDetailModal: React.FC<BookDetailModalProps> = ({ book, onClose,
                         </p>
                     </div>
 
+                    {/* Grounding Sources (Always displayed if present) */}
+                    {book.sources && book.sources.length > 0 && (
+                      <section className="pt-6 border-t border-white/5">
+                        <h4 className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-3">Verification Sources</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {book.sources.map((source, i) => (
+                            <a 
+                              key={i} 
+                              href={source.uri} 
+                              target="_blank" 
+                              rel="noopener noreferrer" 
+                              className="text-[10px] bg-white/5 hover:bg-white/10 border border-white/10 px-3 py-1.5 rounded-full text-accent-gold flex items-center gap-2 transition-colors"
+                            >
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                              {source.title || "External Source"}
+                            </a>
+                          ))}
+                        </div>
+                      </section>
+                    )}
+
                     {/* Deep Archive (Minimal) */}
                     <section className="pt-6">
                       <button 

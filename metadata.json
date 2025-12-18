@@ -1,6 +1,7 @@
 {
   "name": "Atmosphera",
-  "description": "An emotionally intelligent book recommendation engine that curates reading lists based on your current mood, weather, and environmental vibe.",
+  "description": "The peak of emotionally intelligent book discovery. Grounded in December 18, 2025, using real-time atmospheric calibration to deliver the perfect reading experience for the current moment.",
+  "version": "2025.12.18",
   "requestFramePermissions": [
     "microphone"
   ]

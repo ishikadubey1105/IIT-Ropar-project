@@ -1,8 +1,23 @@
 
 import { GoogleGenAI, Type, Modality, LiveServerMessage, Chat, GenerateContentResponse } from "@google/genai";
-import { UserPreferences, Book, CharacterPersona, EnhancedDetails } from "../types";
+import { UserPreferences, Book, CharacterPersona, EnhancedDetails, WebSource } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+// Helper to ensure fresh AI instance
+const getAi = () => new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+
+// System Date Constant - Grounded in the user's requested date
+const SYSTEM_DATE = "December 18, 2025";
+
+// Helper to clean and parse JSON from model responses
+const extractJson = (text: string) => {
+  try {
+    const cleaned = text.replace(/```json/g, '').replace(/```/g, '').trim();
+    return JSON.parse(cleaned);
+  } catch (e) {
+    console.error("JSON parsing failed", text);
+    throw new Error("The literary archives returned an unreadable format.");
+  }
+};
 
 // --- HELPERS ---
 
@@ -50,80 +65,106 @@ const formatError = (error: any, context: string): string => {
 };
 
 /**
- * Truncates text to approximately 5-6 lines (approx 300 characters)
+ * Transforms boring marketing descriptions into cinematic Atmosphera prose.
  */
-const truncateDescription = (text: string): string => {
-  if (!text) return "No description available.";
-  // If it contains a disclaimer about being a summary, try to find the start of actual content
-  const cleanText = text.replace(/DISCLAIMER:.*?novel\./is, '').trim();
-  if (cleanText.length <= 300) return cleanText;
-  return cleanText.substring(0, 300).trim() + "...";
-};
-
-/**
- * Robustly discovers global trending books via Search Grounding.
- */
-export const fetchWebTrendingBooks = async (): Promise<Book[]> => {
+const enhanceVibe = async (book: Partial<Book>): Promise<string> => {
+  const ai = getAi();
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: "Identify the top 8 most trending/popular books globally right now (Late 2024/Early 2025). Return exactly 'Title by Author' per line. No extra chat.",
+      contents: `Rewrite this description for "${book.title}" to be poetic, cinematic, and atmospheric. 
+      STRICT RULES: No marketing fluff, no 'bestseller' tags, max 180 chars. Focus on the soul of the story.
+      Archival Date: ${SYSTEM_DATE}.
+      Original: ${book.description}`,
+      config: {
+        thinkingConfig: { thinkingBudget: 0 }
+      }
+    });
+    return response.text?.trim() || book.description || "";
+  } catch (e) {
+    return book.description || "";
+  }
+};
+
+const truncateDescription = (text: string): string => {
+  if (!text) return "No description available.";
+  const cleanText = text.replace(/DISCLAIMER:.*?novel\./is, '').trim();
+  if (cleanText.length <= 250) return cleanText;
+  return cleanText.substring(0, 250).trim() + "...";
+};
+
+/**
+ * Discovers trending books with web grounding as of 18.12.25.
+ * Parallelized for performance.
+ */
+export const fetchWebTrendingBooks = async (): Promise<Book[]> => {
+  const ai = getAi();
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: `Identify exactly 5 of the most trending or anticipated books globally for the week of ${SYSTEM_DATE}. 
+      Return strictly as a list: Title by Author.`,
       config: {
         tools: [{ googleSearch: {} }],
       },
     });
 
+    const webSources: any[] = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
+    const booksSources: WebSource[] = webSources.filter(chunk => chunk.web).map(chunk => ({
+        uri: chunk.web.uri,
+        title: chunk.web.title
+    }));
+
     const text = response.text || "";
     const lines = text.split('\n')
       .map(l => l.replace(/^\d+\.\s*/, '').trim())
-      .filter(l => l.length > 3 && (l.toLowerCase().includes('by') || l.includes(' - ')));
+      .filter(l => l.length > 5 && l.toLowerCase().includes('by'));
 
-    const trendingBooks: Book[] = [];
-    // Only take top 6 to keep it crisp
-    for (const line of lines.slice(0, 6)) {
+    // PARALLEL FETCHING: Fetch and Enhance all top results at once
+    const bookPromises = lines.slice(0, 5).map(async (line): Promise<Book | null> => {
       try {
-        const results = await searchBooks(line);
-        if (results.length > 0) {
-          trendingBooks.push({
-            ...results[0],
+        const searchResults = await searchBooks(line, true); 
+        if (searchResults.length > 0) {
+          return {
+            ...searchResults[0],
             atmosphericRole: "Global Sensation",
-            reasoning: "Trending globally in search data."
-          });
+            reasoning: `Archival Sync: ${SYSTEM_DATE}. High cultural relevance confirmed.`,
+            sources: booksSources.length > 0 ? booksSources : undefined
+          };
         }
+        return null;
       } catch (e) {
-        console.warn(`Trend search failed: ${line}`, e);
+        return null;
       }
-    }
-    return trendingBooks;
+    });
+
+    const results = await Promise.all(bookPromises);
+    return results.filter((b): b is Book => b !== null);
   } catch (error) {
     console.error("Web trending search failed.", error);
-    return getTrendingBooks("bestselling fiction 2024");
+    return getTrendingBooks(`bestselling fiction ${SYSTEM_DATE}`);
   }
 };
 
 export const getBookRecommendations = async (prefs: UserPreferences): Promise<{ heading: string, insight: string, antiRecommendation: string, books: Book[], confidence: string }> => {
+  const ai = getAi();
   const systemInstruction = `
     You are Atmosphera, an elite book recommendation engine.
-    
-    STRICT CONSTRAINT: BREVITY IS GOD.
-    ALL book descriptions MUST be exactly 5-6 lines (maximum 300 characters). 
-    DO NOT include disclaimers, meta-commentary, or introductory fluff.
-    Focus on the "vibe", atmosphere, and why it is a masterpiece.
-    Be short, crisp, and evocative.
+    Archival Date: ${SYSTEM_DATE}.
+    STRICT CONSTRAINT: Descriptions must be cinematic, eye-catchy, and evocative.
+    Avoid all generic marketing speak. Focus on imagery and vibe.
   `;
 
   const prompt = `
-    ENVIRONMENTAL INPUT:
+    ENVIRONMENTAL INPUT (${SYSTEM_DATE}):
     - Weather: ${prefs.weather}
     - Mood: ${prefs.mood}
     - Energy: ${prefs.pace}
     - Setting: ${prefs.setting}
-    - Interest: ${prefs.specificInterest || 'Best possible collection'}
+    - Interest: ${prefs.specificInterest || 'Curate the absolute best atmosphere'}
 
-    Return a JSON object:
-    - heading: Cinematic title.
-    - insight: One short, crisp phrase.
-    - books: Array of 5 books. Description MUST be exactly 5-6 short lines.
+    Provide a highly curated set of 5 books.
+    Return JSON: heading, insight, antiRecommendation, confidence, books[].
   `;
 
   try {
@@ -149,7 +190,7 @@ export const getBookRecommendations = async (prefs: UserPreferences): Promise<{ 
                       author: { type: Type.STRING },
                       isbn: { type: Type.STRING },
                       genre: { type: Type.STRING },
-                      description: { type: Type.STRING, description: "Max 300 characters, crisp vibe." },
+                      description: { type: Type.STRING, description: "Cinematic and poetic description." },
                       reasoning: { type: Type.STRING },
                       atmosphericRole: { type: Type.STRING },
                       sectionFit: { type: Type.STRING },
@@ -167,22 +208,20 @@ export const getBookRecommendations = async (prefs: UserPreferences): Promise<{ 
       }
     });
     
-    return JSON.parse(response.text || '{}');
+    return extractJson(response.text);
   } catch (error) {
     throw new Error(formatError(error, "getBookRecommendations"));
   }
 };
 
 export const fetchEnhancedBookDetails = async (book: Book, prefs: UserPreferences | null): Promise<EnhancedDetails> => {
+  const ai = getAi();
   const systemInstruction = `
-    You are Atmosphera. Generate crisp book metadata.
-    STRICT CONSTRAINT: Every single field must be short. 
-    Synopses MUST be 5-6 sentences max. 
-    NO fluff. NO disclaimers. 
-    Be punchy and cinematic.
+    You are Atmosphera. Generate crisp, eye-catchy book metadata for ${SYSTEM_DATE}.
+    Descriptions must be poetic and focus on sensory details.
   `;
 
-  const prompt = `Metadata for "${book.title}" by ${book.author}.`;
+  const prompt = `Generate deep metadata for "${book.title}" by ${book.author}. Synchronized for ${SYSTEM_DATE}.`;
 
   try {
     const response: GenerateContentResponse = await ai.models.generateContent({
@@ -226,17 +265,17 @@ export const fetchEnhancedBookDetails = async (book: Book, prefs: UserPreference
         }
       }
     });
-    return JSON.parse(response.text || '{}');
+    return extractJson(response.text);
   } catch (error) {
     throw new Error(formatError(error, "fetchEnhancedBookDetails"));
   }
 };
 
-export const searchBooks = async (query: string): Promise<Book[]> => {
+export const searchBooks = async (query: string, enhance: boolean = false): Promise<Book[]> => {
   try {
-    const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=10&printType=books`);
+    const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=5&printType=books`);
     const data = await res.json();
-    return (data.items || []).map((item: any) => {
+    const books = (data.items || []).map((item: any) => {
         const info = item.volumeInfo;
         return {
             title: info.title,
@@ -252,6 +291,12 @@ export const searchBooks = async (query: string): Promise<Book[]> => {
             coverUrl: info.imageLinks?.thumbnail?.replace('http:', 'https:')
         } as Book;
     });
+
+    if (enhance && books.length > 0) {
+      books[0].description = await enhanceVibe(books[0]);
+    }
+
+    return books;
   } catch (e) {
     console.error("searchBooks error", e);
     return [];
@@ -260,8 +305,8 @@ export const searchBooks = async (query: string): Promise<Book[]> => {
 
 export const getTrendingBooks = async (context?: string): Promise<Book[]> => {
   try {
-    const query = context || 'subject:fiction';
-    const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=10&printType=books`);
+    const query = context || `subject:fiction ${SYSTEM_DATE}`;
+    const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=8&printType=books`);
     const data = await res.json();
     return (data.items || []).map((item: any) => {
         const info = item.volumeInfo;
@@ -286,9 +331,10 @@ export const getTrendingBooks = async (context?: string): Promise<Book[]> => {
 };
 
 export const getCharacterPersona = async (title: string, author: string): Promise<CharacterPersona> => {
+  const ai = getAi();
   const response: GenerateContentResponse = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
-    contents: `Identify a character from "${title}" by ${author}. Return JSON: name, greeting, systemInstruction. Keep greeting very short (max 12 words).`,
+    contents: `Identify a character from "${title}" by ${author}. Dec 2025 sync. Return JSON: name, greeting, systemInstruction.`,
     config: {
       responseMimeType: "application/json",
       responseSchema: {
@@ -298,15 +344,19 @@ export const getCharacterPersona = async (title: string, author: string): Promis
       }
     }
   });
-  return JSON.parse(response.text || '{}');
+  return extractJson(response.text);
 };
 
-export const createChatSession = (sys: string): Chat => ai.chats.create({ 
-  model: "gemini-3-flash-preview", 
-  config: { systemInstruction: sys + " Be crisp. Maximum 2 short sentences per response." } 
-});
+export const createChatSession = (sys: string): Chat => {
+  const ai = getAi();
+  return ai.chats.create({ 
+    model: "gemini-3-flash-preview", 
+    config: { systemInstruction: sys + ` Sync Date: ${SYSTEM_DATE}. Be concise.` } 
+  });
+};
 
 export const generateMoodImage = async (prompt: string): Promise<string> => {
+  const ai = getAi();
   const response: GenerateContentResponse = await ai.models.generateContent({
     model: 'gemini-2.5-flash-image',
     contents: { parts: [{ text: prompt }] },
@@ -318,6 +368,7 @@ export const generateMoodImage = async (prompt: string): Promise<string> => {
 };
 
 export const editMoodImage = async (base64Url: string, prompt: string): Promise<string> => {
+  const ai = getAi();
   const base64Data = base64Url.includes(',') ? base64Url.split(',')[1] : base64Url;
   const response: GenerateContentResponse = await ai.models.generateContent({
     model: 'gemini-2.5-flash-image',
@@ -332,6 +383,7 @@ export const editMoodImage = async (base64Url: string, prompt: string): Promise<
 };
 
 export const generateAudioPreview = async (t: string): Promise<AudioBuffer> => {
+  const ai = getAi();
   const response: GenerateContentResponse = await ai.models.generateContent({
     model: "gemini-2.5-flash-preview-tts",
     contents: [{ parts: [{ text: t }] }],
@@ -346,6 +398,7 @@ export const generateAudioPreview = async (t: string): Promise<AudioBuffer> => {
 };
 
 export const connectToLiveLibrarian = async (onAudio: (buffer: AudioBuffer) => void, onClose: () => void) => {
+  const ai = getAi();
   const inputAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)({sampleRate: 16000});
   const outputAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)({sampleRate: 24000});
   const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -384,7 +437,7 @@ export const connectToLiveLibrarian = async (onAudio: (buffer: AudioBuffer) => v
     },
     config: { 
       responseModalities: [Modality.AUDIO], 
-      systemInstruction: 'You are Atmosphera\'s librarian. Help users find books. Keep responses short and crisp.' 
+      systemInstruction: `You are Atmosphera's librarian. Helper for ${SYSTEM_DATE}. Keep responses short and atmospheric.` 
     },
   });
   

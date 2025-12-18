@@ -25,13 +25,13 @@ function App() {
   
   // UI State
   const [loading, setLoading] = useState(true);
+  const [secondaryLoading, setSecondaryLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState(""); 
   const [searchInputValue, setSearchInputValue] = useState(""); 
   const [searchResults, setSearchResults] = useState<Book[]>([]);
   const [recTitle, setRecTitle] = useState("Curated for You");
 
-  // Deduplication logic to ensure unique books across sections
   const displayedShelves = useMemo(() => {
     const seen = new Set<string>();
     const markSeen = (b: Book) => seen.add(`${b.title}-${b.author}`.toLowerCase());
@@ -58,45 +58,38 @@ function App() {
       setLoading(true);
       setError(null);
       try {
+        // STEP 1: LOAD PRIMARY TRENDS (Web Grounded)
+        const trending = await fetchWebTrendingBooks();
+        if (trending && trending.length > 0) {
+          setShelves([{ title: "Global Sensations", books: trending, isLive: true }]);
+          setFeaturedBook(trending[0]);
+          setLoading(false); // Enable interactive shell immediately
+        }
+
+        // STEP 2: LOAD SECONDARY CATEGORIES (Non-blocking)
+        setSecondaryLoading(true);
         const staticCategories = [
-          { name: "Global Sensations", query: "LIVE_SEARCH" },
           { name: "Trending Now", query: "subject:fiction" },
           { name: "Masterpiece Collection", query: "all-time best books classics" },
           { name: "Heritage & Lore", query: "subject:Indian literature" },
           { name: "Suspense & Thrillers", query: "subject:thriller" },
+          { name: "Romantic Escapes", query: "subject:romance" },
           { name: "Sci-Fi & Future", query: "subject:science fiction" }
         ];
 
-        const results = await Promise.allSettled([
-          fetchWebTrendingBooks(),
-          ...staticCategories.slice(1).map(cat => getTrendingBooks(cat.query))
-        ]);
-
-        const newShelves: {title: string, books: Book[], isLive?: boolean}[] = [];
-        
-        results.forEach((res, idx) => {
-          if (res.status === 'fulfilled' && res.value && res.value.length > 0) {
-            newShelves.push({
-              title: idx === 0 ? "Global Sensations" : staticCategories[idx].name,
-              books: res.value,
-              isLive: idx === 0
-            });
-          }
+        const shelfPromises = staticCategories.map(async (cat) => {
+          const books = await getTrendingBooks(cat.query);
+          return { title: cat.name, books, isLive: false };
         });
 
-        if (newShelves.length === 0) {
-           setError("The library is quiet. Please check your connection.");
-        } else {
-           setShelves(newShelves);
-           if (newShelves[0].books.length > 0) {
-             setFeaturedBook(newShelves[0].books[0]);
-           }
-        }
+        const extraShelves = await Promise.all(shelfPromises);
+        setShelves(prev => [...prev, ...extraShelves]);
       } catch (err) {
         console.error("Critical library load failure", err);
-        setError("Archives unreachable. Retrying...");
+        setError("Archives unreachable. Sync error.");
       } finally {
         setLoading(false);
+        setSecondaryLoading(false);
       }
     };
 
@@ -167,7 +160,7 @@ function App() {
       <div className="relative z-10">
         {view === 'curate' ? (
           <div className="pt-32 min-h-screen flex items-center justify-center">
-             <Questionnaire onComplete={handleCurateComplete} />
+             < Questionnaire onComplete={handleCurateComplete} />
           </div>
         ) : view === 'genres' ? (
           <GenresView onGenreSelect={handleGenreSelect} onBack={() => setView('home')} />
@@ -219,10 +212,10 @@ function App() {
                   />
                 ))}
 
-                {loading && (
-                  <div className="flex flex-col items-center justify-center py-40 gap-4">
-                    <div className="w-12 h-12 border-4 border-accent-gold border-t-transparent rounded-full animate-spin"></div>
-                    <div className="animate-pulse text-accent-gold font-serif italic text-lg">Summoning books...</div>
+                {(loading || secondaryLoading) && (
+                  <div className="flex flex-col items-center justify-center py-20 gap-4">
+                    <div className="w-8 h-8 border-2 border-accent-gold border-t-transparent rounded-full animate-spin"></div>
+                    <div className="animate-pulse text-accent-gold font-serif italic text-sm">Synchronizing Dec 18, 2025 archives...</div>
                   </div>
                 )}
             </div>
