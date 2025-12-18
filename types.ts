@@ -1,38 +1,41 @@
 
 export interface Book {
-  id?: string; // unique identifier (title + author slug)
+  id?: string;
   title: string;
   author: string;
-  isbn?: string; // Added for fetching covers
+  isbn?: string;
   description: string;
   reasoning: string;
   moodColor: string;
   genre: string;
-  firstSentence?: string;
   excerpt: string;
-  ebookUrl?: string; // Link to the e-book if available
-  moviePairing?: string; // Media recommendation based on color/vibe
-  musicPairing?: string; // Musical recommendation
-  foodPairing?: string; // Food/Drink recommendation
-  language?: string; // Added language support
-  coverUrl?: string; // Direct link to cover image for optimization
+  ebookUrl?: string;
+  moviePairing?: string;
+  musicPairing?: string;
+  foodPairing?: string;
+  language?: string;
+  coverUrl?: string;
   
-  // Extended Metadata from Global Archive
+  // New Enhanced Metadata
+  atmosphericRole?: string; // e.g., 'Grounding', 'Immersive', 'Energizing'
+  cognitiveEffort?: 'Light' | 'Moderate' | 'Demanding';
+  sectionFit?: string;
+  momentFit?: string;
+  
   publisher?: string;
   publishedDate?: string;
   pageCount?: number;
   averageRating?: number;
   ratingsCount?: number;
 
-  // E-book Specific Metadata
   isEbook?: boolean;
-  saleability?: string; // 'FOR_SALE', 'FREE', 'NOT_FOR_SALE'
+  saleability?: string;
   price?: {
     amount: number;
     currencyCode: string;
   };
   buyLink?: string;
-  accessViewStatus?: string; // 'FULL_PUBLIC_DOMAIN', 'SAMPLE', etc.
+  accessViewStatus?: string;
   pdfAvailable?: boolean;
   epubAvailable?: boolean;
 }
@@ -98,7 +101,7 @@ export enum WorldSetting {
   SCIFI = 'Sci-Fi / Futuristic',
   DYSTOPIAN = 'Dystopian / Post-Apocalyptic',
   MAGICAL_REALISM = 'Magical Realism',
-  GOTHIC = 'Gothic / Eerie',
+  GOTHIC = 'GOTHIC / Eerie',
   SURPRISE = 'Surprise Me'
 }
 

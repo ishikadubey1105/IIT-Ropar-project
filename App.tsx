@@ -57,8 +57,8 @@ function App() {
         }
     });
     
-    // New Sections
-    getTrendingBooks("subject:fiction", true).then(setNewBooks); 
+    // Fix: Removed extra 'true' argument from getTrendingBooks
+    getTrendingBooks("subject:fiction").then(setNewBooks); 
     getTrendingBooks("bestsellers").then(setBestsellerBooks); 
     
     // Specific requests
