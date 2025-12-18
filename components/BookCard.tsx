@@ -1,8 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Book, WebSource } from '../types';
-import { generateAudioPreview, fetchBookDetails } from '../services/gemini';
+import { Book } from '../types';
+import { generateAudioPreview } from '../services/gemini';
 import { isInWishlist, toggleWishlist } from '../services/storage';
-import { MoodVisualizer } from './MoodVisualizer';
 import { BookCover } from './BookCover';
 
 interface BookCardProps {
@@ -16,14 +15,13 @@ export const BookCard: React.FC<BookCardProps> = ({ book, index, onClick }) => {
   const [isAudioLoading, setIsAudioLoading] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [isShared, setIsShared] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   const audioContextRef = useRef<AudioContext | null>(null);
   const sourceNodeRef = useRef<AudioBufferSourceNode | null>(null);
 
   useEffect(() => {
-    // Check initial saved state
     setIsSaved(isInWishlist(book));
-
     return () => {
       if (sourceNodeRef.current) sourceNodeRef.current.stop();
       if (audioContextRef.current) audioContextRef.current.close();
@@ -32,6 +30,7 @@ export const BookCard: React.FC<BookCardProps> = ({ book, index, onClick }) => {
 
   const handlePlayPreview = async (e: React.MouseEvent) => {
     e.stopPropagation();
+    setError(null);
     if (isPlaying) {
       if (sourceNodeRef.current) sourceNodeRef.current.stop();
       setIsPlaying(false);
@@ -52,8 +51,9 @@ export const BookCard: React.FC<BookCardProps> = ({ book, index, onClick }) => {
       source.start();
       sourceNodeRef.current = source;
       setIsPlaying(true);
-    } catch (error) {
-      alert("Could not generate audio preview.");
+    } catch (err: any) {
+      setError(err.message || "Could not summon the audio preview.");
+      setTimeout(() => setError(null), 4000);
     } finally {
       setIsAudioLoading(false);
     }
@@ -69,7 +69,7 @@ export const BookCard: React.FC<BookCardProps> = ({ book, index, onClick }) => {
     e.stopPropagation();
     const shareData = {
       title: book.title,
-      text: `Check out "${book.title}" by ${book.author} on Atmosphera. ${book.description}`,
+      text: `Check out "${book.title}" by ${book.author} on Atmosphera.`,
       url: book.ebookUrl || window.location.href
     };
 
@@ -120,7 +120,6 @@ export const BookCard: React.FC<BookCardProps> = ({ book, index, onClick }) => {
               )}
             </button>
 
-            {/* E-Book Button */}
             {book.ebookUrl && (
               <a 
                 href={book.ebookUrl} 
@@ -134,7 +133,6 @@ export const BookCard: React.FC<BookCardProps> = ({ book, index, onClick }) => {
               </a>
             )}
 
-            {/* Wishlist Button */}
             <button
               onClick={handleToggleSave}
               className={`flex items-center justify-center w-8 h-8 rounded-full border transition-all duration-300 bg-black/20
@@ -153,7 +151,6 @@ export const BookCard: React.FC<BookCardProps> = ({ book, index, onClick }) => {
           </div>
         </div>
         
-        {/* Cover & Play Button */}
         <div className="relative aspect-[2/3] w-full rounded-lg overflow-hidden mb-4 shadow-lg group-hover:shadow-accent-gold/10 transition-shadow bg-slate-800">
            <BookCover 
              isbn={book.isbn} 
@@ -163,6 +160,12 @@ export const BookCard: React.FC<BookCardProps> = ({ book, index, onClick }) => {
              className="w-full h-full"
            />
            
+           {error && (
+             <div className="absolute inset-x-0 top-0 bg-red-500/90 text-[10px] text-white p-2 text-center animate-fade-in z-30 font-bold backdrop-blur-sm">
+                {error}
+             </div>
+           )}
+
            <button 
              onClick={handlePlayPreview}
              disabled={isAudioLoading}
@@ -191,6 +194,11 @@ export const BookCard: React.FC<BookCardProps> = ({ book, index, onClick }) => {
         <div className="mt-auto">
            <h3 className="text-xl font-serif font-bold text-white mb-1 line-clamp-1 leading-tight group-hover:text-accent-gold transition-colors">{book.title}</h3>
            <p className="text-sm text-slate-400 font-medium">{book.author}</p>
+           {book.publisher && (
+             <p className="text-[9px] text-slate-500 mt-1 opacity-60 uppercase tracking-tighter truncate font-sans">
+               {book.publisher}
+             </p>
+           )}
         </div>
       </div>
     </div>

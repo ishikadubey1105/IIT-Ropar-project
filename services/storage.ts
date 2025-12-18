@@ -1,8 +1,10 @@
-import { Book, ReadingProgress } from '../types';
+
+import { Book, ReadingProgress, TrainingSignal } from '../types';
 
 const STORAGE_KEY_WISHLIST = 'atmosphera_wishlist';
 const STORAGE_KEY_ACTIVE = 'atmosphera_active_read';
 const STORAGE_KEY_PROGRESS = 'atmosphera_reading_progress';
+const STORAGE_KEY_TRAINING = 'atmosphera_training_signals';
 
 // Helper to generate IDs if missing
 const ensureId = (book: Book): Book => {
@@ -74,12 +76,11 @@ export const setActiveRead = (book: Book | null) => {
   if (book) {
     const currentRead = getActiveRead();
     
-    // If we are switching books, or starting a new one, reset or init progress
     if (!currentRead || currentRead.title !== book.title) {
        const initialProgress: ReadingProgress = {
          bookTitle: book.title,
          currentPage: 0,
-         totalPages: book.pageCount || 300, // Default to 300 if unknown
+         totalPages: book.pageCount || 300, 
          percentage: 0,
          lastUpdated: new Date().toISOString()
        };
@@ -89,8 +90,28 @@ export const setActiveRead = (book: Book | null) => {
     localStorage.setItem(STORAGE_KEY_ACTIVE, JSON.stringify(ensureId(book)));
   } else {
     localStorage.removeItem(STORAGE_KEY_ACTIVE);
-    // Optionally keep progress history, but for now we clear active progress context
-    // localStorage.removeItem(STORAGE_KEY_PROGRESS); 
   }
   window.dispatchEvent(new Event('active-read-updated'));
+};
+
+// Added training signal management functions to fix NeuralLab.tsx import errors
+export const getTrainingSignals = (): TrainingSignal[] => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY_TRAINING);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+};
+
+export const saveTrainingSignal = (signal: TrainingSignal) => {
+  const signals = getTrainingSignals();
+  signals.push(signal);
+  localStorage.setItem(STORAGE_KEY_TRAINING, JSON.stringify(signals));
+  window.dispatchEvent(new Event('training-updated'));
+};
+
+export const clearTrainingData = () => {
+  localStorage.removeItem(STORAGE_KEY_TRAINING);
+  window.dispatchEvent(new Event('training-updated'));
 };

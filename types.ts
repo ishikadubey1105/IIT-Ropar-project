@@ -16,8 +16,8 @@ export interface Book {
   language?: string;
   coverUrl?: string;
   
-  // New Enhanced Metadata
-  atmosphericRole?: string; // e.g., 'Grounding', 'Immersive', 'Energizing'
+  // Enhanced Metadata
+  atmosphericRole?: string; 
   cognitiveEffort?: 'Light' | 'Moderate' | 'Demanding';
   sectionFit?: string;
   momentFit?: string;
@@ -38,6 +38,31 @@ export interface Book {
   accessViewStatus?: string;
   pdfAvailable?: boolean;
   epubAvailable?: boolean;
+}
+
+export interface EnhancedDetails {
+  literaryIdentity: string;
+  whyFitsNow: string[];
+  commitment: {
+    attention: 'low' | 'moderate' | 'high';
+    weight: 'light' | 'moderate' | 'heavy';
+    pacing: 'slow' | 'steady' | 'fast';
+  };
+  emotionalArc: string;
+  readWhen: string[];
+  avoidWhen: string[];
+  microSynopsis: string;
+  atmosphericProfile: {
+    tone: string;
+    imagery: string;
+    bestTime: string;
+  };
+  readDifferentlyInsight: string;
+  sectionJustification: string;
+  deepArchive: {
+    fullSynopsis: string;
+    authorBackground: string;
+  };
 }
 
 export interface ReadingProgress {
@@ -120,4 +145,15 @@ export interface StepProps {
   onNext: (data: Partial<UserPreferences>) => void;
   onBack: () => void;
   data: UserPreferences;
+}
+
+// Added TrainingSignal interface to fix import errors in NeuralLab.tsx
+export interface TrainingSignal {
+  id: string;
+  bookTitle: string;
+  bookAuthor: string;
+  feedbackType: 'positive' | 'negative';
+  contextNote: string;
+  atmosphericWeight: number;
+  timestamp: string;
 }

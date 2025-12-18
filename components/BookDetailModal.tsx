@@ -1,146 +1,257 @@
 
 import React, { useState, useEffect } from 'react';
-import { Book, ReadingProgress } from '../types';
+import { Book, EnhancedDetails, UserPreferences } from '../types';
 import { MoodVisualizer } from './MoodVisualizer';
-import { setActiveRead, getActiveRead, getReadingProgress, saveReadingProgress } from '../services/storage';
 import { BookCover } from './BookCover';
 import { CharacterChat } from './CharacterChat';
+import { fetchEnhancedBookDetails } from '../services/gemini';
 
 interface BookDetailModalProps {
   book: Book | null;
   onClose: () => void;
   onToggleWishlist: (book: Book) => void;
   isInWishlist: boolean;
+  userPrefs: UserPreferences | null;
 }
 
-export const BookDetailModal: React.FC<BookDetailModalProps> = ({ book, onClose, onToggleWishlist, isInWishlist }) => {
+export const BookDetailModal: React.FC<BookDetailModalProps> = ({ book, onClose, onToggleWishlist, isInWishlist, userPrefs }) => {
   const [activeTab, setActiveTab] = useState<'details' | 'chat'>('details');
-  const [isActiveRead, setIsActiveRead] = useState(false);
-  const [progress, setProgress] = useState<ReadingProgress | null>(null);
+  const [enhanced, setEnhanced] = useState<EnhancedDetails | null>(null);
+  const [loadingEnhanced, setLoadingEnhanced] = useState(false);
+  const [showDeepArchive, setShowDeepArchive] = useState(false);
 
   useEffect(() => {
     if (book) {
-      const currentActive = getActiveRead();
-      const isCurrent = currentActive?.title === book.title && currentActive?.author === book.author;
-      setIsActiveRead(isCurrent);
-      if (isCurrent) setProgress(getReadingProgress());
+      setEnhanced(null);
+      setLoadingEnhanced(true);
+      fetchEnhancedBookDetails(book, userPrefs)
+        .then(setEnhanced)
+        .catch(console.error)
+        .finally(() => setLoadingEnhanced(false));
+    } else {
+      setEnhanced(null);
+      setShowDeepArchive(false);
     }
-  }, [book]);
+  }, [book, userPrefs]);
 
   if (!book) return null;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/95 backdrop-blur-md" onClick={onClose} />
-      <div className="relative bg-[#0a0a0c] w-full max-w-6xl max-h-[95vh] overflow-y-auto rounded-2xl shadow-2xl border border-white/10 scrollbar-hide">
-        <button onClick={onClose} className="absolute top-6 right-6 z-50 bg-black/50 p-2 rounded-full border border-white/10 hover:rotate-90 transition-all">
-          <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+      <div className="relative bg-[#0a0a0c] w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-xl shadow-2xl border border-white/10 scrollbar-hide text-slate-200">
+        
+        <button onClick={onClose} className="absolute top-4 right-4 z-50 bg-black/50 p-1.5 rounded-full border border-white/10 hover:rotate-90 transition-all text-white">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
         </button>
 
-        {/* Cinematic Header */}
-        <div className="relative h-[450px] w-full flex items-end p-8 md:p-16">
+        {/* Compressed Header */}
+        <div className="relative h-[280px] w-full flex items-end p-6 md:p-10">
             <div className="absolute inset-0 pointer-events-none">
-                <BookCover isbn={book.isbn} title={book.title} author={book.author} moodColor={book.moodColor} className="w-full h-full opacity-30 blur-3xl scale-125" showText={false} />
+                <BookCover isbn={book.isbn} title={book.title} author={book.author} moodColor={book.moodColor} className="w-full h-full opacity-20 blur-2xl" showText={false} />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0c] via-[#0a0a0c]/40 to-transparent" />
             </div>
 
-            <div className="relative z-10 flex flex-col md:flex-row items-end gap-10 w-full">
-                <div className="hidden md:block w-64 aspect-[2/3] rounded-lg shadow-2xl border border-white/10 overflow-hidden transform translate-y-10">
+            <div className="relative z-10 flex items-end gap-6 w-full">
+                <div className="hidden md:block w-32 aspect-[2/3] rounded shadow-xl border border-white/10 overflow-hidden transform translate-y-4">
                     <BookCover isbn={book.isbn} title={book.title} author={book.author} moodColor={book.moodColor} className="w-full h-full" />
                 </div>
-                <div className="flex-1 pb-4">
-                    <div className="flex gap-2 mb-4">
-                        <span className="px-3 py-1 bg-accent-gold/20 text-accent-gold border border-accent-gold/40 rounded text-[10px] font-bold uppercase tracking-widest">{book.genre}</span>
-                        {book.atmosphericRole && <span className="px-3 py-1 bg-white/5 text-slate-400 border border-white/10 rounded text-[10px] font-bold uppercase tracking-widest">{book.atmosphericRole} Role</span>}
-                    </div>
-                    <h2 className="text-4xl md:text-7xl font-serif font-bold text-white mb-4 leading-none">{book.title}</h2>
-                    <p className="text-xl md:text-2xl text-slate-400 font-light italic">By {book.author}</p>
+                <div className="flex-1">
+                    <h2 className="text-3xl md:text-5xl font-serif font-bold text-white mb-1 leading-tight">{book.title}</h2>
+                    <p className="text-lg text-accent-gold/80 font-serif italic">By {book.author}</p>
+                    {enhanced && (
+                      <p className="text-xs md:text-sm text-slate-400 font-light mt-2 italic border-l border-accent-gold/40 pl-3">
+                        {enhanced.literaryIdentity}
+                      </p>
+                    )}
                 </div>
             </div>
         </div>
 
-        {/* Tab Nav */}
-        <div className="flex border-b border-white/5 px-8 md:px-16 sticky top-0 bg-[#0a0a0c]/80 backdrop-blur-xl z-30">
-            {['details', 'chat'].map((tab) => (
-                <button key={tab} onClick={() => setActiveTab(tab as any)} className={`py-6 px-8 text-xs font-bold uppercase tracking-widest transition-all relative ${activeTab === tab ? 'text-white' : 'text-slate-500 hover:text-slate-300'}`}>
-                    {tab === 'details' ? 'The Archive' : 'Character Echo'}
-                    {activeTab === tab && <div className="absolute bottom-0 left-0 w-full h-1 bg-accent-gold rounded-t-full shadow-[0_0_10px_rgba(212,175,55,0.5)]" />}
-                </button>
-            ))}
+        {/* Tab Navigation */}
+        <div className="flex border-b border-white/5 px-6 md:px-10 sticky top-0 bg-[#0a0a0c]/90 backdrop-blur-xl z-[40]">
+            <button onClick={() => setActiveTab('details')} className={`py-4 px-6 text-[10px] font-bold uppercase tracking-widest transition-all relative ${activeTab === 'details' ? 'text-white' : 'text-slate-500 hover:text-slate-300'}`}>
+                Curation
+                {activeTab === 'details' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-accent-gold" />}
+            </button>
+            <button onClick={() => setActiveTab('chat')} className={`py-4 px-6 text-[10px] font-bold uppercase tracking-widest transition-all relative ${activeTab === 'chat' ? 'text-white' : 'text-slate-500 hover:text-slate-300'}`}>
+                Echo
+                {activeTab === 'chat' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-accent-gold" />}
+            </button>
         </div>
 
-        <div className="p-8 md:p-16 grid grid-cols-1 lg:grid-cols-3 gap-16">
-            <div className="lg:col-span-2 space-y-12">
-                {activeTab === 'details' ? (
-                    <>
-                        {/* Enhanced Metadata Highlights */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div className="bg-white/5 p-6 rounded-xl border border-white/5 hover:border-accent-gold/30 transition-all">
-                                <span className="text-[10px] text-slate-500 uppercase font-bold tracking-widest block mb-2">Cognitive Effort</span>
-                                <p className="text-white font-serif text-xl">{book.cognitiveEffort || 'Moderate'}</p>
-                            </div>
-                            <div className="bg-white/5 p-6 rounded-xl border border-white/5 hover:border-accent-gold/30 transition-all">
-                                <span className="text-[10px] text-slate-500 uppercase font-bold tracking-widest block mb-2">Atmospheric Role</span>
-                                <p className="text-white font-serif text-xl">{book.atmosphericRole || 'Immersive'}</p>
-                            </div>
-                            <div className="bg-white/5 p-6 rounded-xl border border-white/5 hover:border-accent-gold/30 transition-all">
-                                <span className="text-[10px] text-slate-500 uppercase font-bold tracking-widest block mb-2">Sensory Mood</span>
-                                <div className="flex items-center gap-2">
-                                    <div className="w-4 h-4 rounded-full" style={{ backgroundColor: book.moodColor }} />
-                                    <span className="text-white font-mono text-sm">{book.moodColor}</span>
-                                </div>
-                            </div>
-                        </div>
+        <div className="p-6 md:p-10">
+          {activeTab === 'details' ? (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+              
+              <div className="lg:col-span-2 space-y-10">
+                
+                {loadingEnhanced ? (
+                  <div className="space-y-8 animate-pulse">
+                    <div className="h-10 bg-white/5 rounded-lg w-1/3"></div>
+                    <div className="h-24 bg-white/5 rounded-lg"></div>
+                    <div className="grid grid-cols-3 gap-4">
+                       <div className="h-16 bg-white/5 rounded-lg"></div>
+                       <div className="h-16 bg-white/5 rounded-lg"></div>
+                       <div className="h-16 bg-white/5 rounded-lg"></div>
+                    </div>
+                  </div>
+                ) : enhanced ? (
+                  <>
+                    {/* Why This Fits Now */}
+                    <section className="space-y-3">
+                      <h4 className="text-accent-gold text-[10px] font-bold uppercase tracking-[0.2em]">Atmospheric Context</h4>
+                      <ul className="space-y-2">
+                        {enhanced.whyFitsNow.map((bullet, i) => (
+                          <li key={i} className="text-lg md:text-xl font-serif text-white leading-snug italic font-light">
+                             "{bullet}"
+                          </li>
+                        ))}
+                      </ul>
+                    </section>
 
-                        {book.momentFit && (
-                            <div className="p-8 bg-accent-gold/5 border-l-4 border-accent-gold rounded-r-xl">
-                                <h4 className="text-accent-gold text-xs font-bold uppercase mb-3 tracking-widest">Why it fits this moment</h4>
-                                <p className="text-slate-200 text-lg italic font-serif leading-relaxed">"{book.momentFit}"</p>
+                    {/* Commitment & Arc (Tightened) */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <section className="p-5 bg-white/5 rounded-lg border border-white/10 space-y-4">
+                        <h4 className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Commitment</h4>
+                        <div className="flex flex-wrap gap-4">
+                          <div className="flex flex-col">
+                            <span className="text-[9px] text-slate-500 uppercase">Attention</span>
+                            <span className="text-sm text-white font-bold">{enhanced.commitment.attention}</span>
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-[9px] text-slate-500 uppercase">Weight</span>
+                            <span className="text-sm text-white font-bold">{enhanced.commitment.weight}</span>
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-[9px] text-slate-500 uppercase">Pacing</span>
+                            <span className="text-sm text-white font-bold">{enhanced.commitment.pacing}</span>
+                          </div>
+                        </div>
+                        <div className="pt-2 border-t border-white/5">
+                           <span className="text-[9px] text-slate-500 uppercase block mb-1">Emotional Arc</span>
+                           <span className="text-sm text-accent-gold italic font-serif">{enhanced.emotionalArc}</span>
+                        </div>
+                      </section>
+                      <section className="p-5 bg-white/5 rounded-lg border border-white/10 space-y-4">
+                         <h4 className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Decision Guidance</h4>
+                         <div className="space-y-3">
+                            <div>
+                               <span className="text-[9px] text-emerald-500 uppercase font-bold block">Read if...</span>
+                               <ul className="text-xs text-slate-300 italic">
+                                  {enhanced.readWhen.map((w, i) => <li key={i}>• {w}</li>)}
+                               </ul>
                             </div>
-                        )}
+                            <div>
+                               <span className="text-[9px] text-red-400 uppercase font-bold block">Avoid if...</span>
+                               <ul className="text-xs text-slate-300 italic">
+                                  {enhanced.avoidWhen.map((w, i) => <li key={i}>• {w}</li>)}
+                               </ul>
+                            </div>
+                         </div>
+                      </section>
+                    </div>
 
-                        <div className="space-y-6">
-                            <h3 className="text-3xl font-serif font-bold text-white">The Synopsis</h3>
-                            <p className="text-slate-300 text-lg leading-relaxed font-light">{book.description}</p>
-                        </div>
+                    {/* Micro-Synopsis */}
+                    <section className="space-y-3 pt-6 border-t border-white/5">
+                      <h4 className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Micro-Synopsis</h4>
+                      <p className="text-lg font-serif text-slate-200 leading-relaxed font-light italic">
+                        "{enhanced.microSynopsis}"
+                      </p>
+                    </section>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {book.musicPairing && (
-                                <div className="p-6 bg-white/5 rounded-xl border border-white/5">
-                                    <span className="text-[10px] text-slate-500 font-bold uppercase block mb-3">Soundtrack</span>
-                                    <p className="text-slate-200 italic">"{book.musicPairing}"</p>
-                                </div>
-                            )}
-                            {book.moviePairing && (
-                                <div className="p-6 bg-white/5 rounded-xl border border-white/5">
-                                    <span className="text-[10px] text-slate-500 font-bold uppercase block mb-3">Cinema Match</span>
-                                    <p className="text-slate-200 italic">"{book.moviePairing}"</p>
-                                </div>
-                            )}
+                    {/* Insight & Justification */}
+                    <div className="space-y-4">
+                        <section className="bg-accent-gold/5 p-5 rounded-lg border-l-2 border-accent-gold">
+                           <h4 className="text-accent-gold text-[9px] font-bold uppercase tracking-widest mb-2">Signature Insight</h4>
+                           <p className="text-sm text-white italic font-serif">
+                             {enhanced.readDifferentlyInsight}
+                           </p>
+                        </section>
+                        <p className="text-[10px] text-slate-500 italic opacity-60 px-2">
+                           {enhanced.sectionJustification}
+                        </p>
+                    </div>
+
+                    {/* Deep Archive (Minimal) */}
+                    <section className="pt-6">
+                      <button 
+                        onClick={() => setShowDeepArchive(!showDeepArchive)}
+                        className="flex items-center gap-2 text-slate-500 hover:text-white text-[10px] uppercase font-bold tracking-[0.2em] transition-colors"
+                      >
+                        {showDeepArchive ? 'Collapse Archive' : 'Deep Archive'}
+                        <svg className={`w-3 h-3 transition-transform duration-300 ${showDeepArchive ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                      </button>
+                      
+                      {showDeepArchive && (
+                        <div className="mt-4 space-y-6 animate-fade-in p-6 bg-black/40 rounded-lg border border-white/5">
+                           <div className="space-y-2">
+                              <h5 className="text-white text-[9px] font-bold uppercase">Archive Synopsis</h5>
+                              <p className="text-slate-400 text-xs leading-relaxed">{enhanced.deepArchive.fullSynopsis}</p>
+                           </div>
+                           <div className="space-y-2">
+                              <h5 className="text-white text-[9px] font-bold uppercase">Author Background</h5>
+                              <p className="text-slate-400 text-xs italic">{enhanced.deepArchive.authorBackground}</p>
+                           </div>
                         </div>
-                    </>
+                      )}
+                    </section>
+                  </>
                 ) : (
-                    <CharacterChat bookTitle={book.title} author={book.author} onClose={() => setActiveTab('details')} />
+                  <div className="h-64 flex items-center justify-center">
+                    <p className="text-slate-600 italic">Attempting to sync with the library spirits...</p>
+                  </div>
                 )}
-            </div>
+              </div>
 
-            <div className="space-y-10">
-                <div className="bg-slate-900/50 p-8 rounded-2xl border border-white/5">
-                    <h4 className="text-slate-500 text-[10px] font-bold uppercase mb-6 tracking-widest">World Visualization</h4>
-                    <MoodVisualizer initialPrompt={`Artistic atmospheric cover for ${book.title}, ${book.genre}, style: cinematic, color: ${book.moodColor}`} />
+              {/* Sidebar Sensory Profile */}
+              <div className="space-y-8">
+                <div className="bg-slate-900/40 p-6 rounded-xl border border-white/5 space-y-6">
+                    <h4 className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Atmospheric Profile</h4>
+                    
+                    {enhanced ? (
+                      <div className="space-y-6 animate-fade-in">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                               <span className="text-[8px] text-slate-500 uppercase font-bold">Tone</span>
+                               <p className="text-white font-serif italic text-sm">{enhanced.atmosphericProfile.tone}</p>
+                            </div>
+                            <div>
+                               <span className="text-[8px] text-slate-500 uppercase font-bold">Imagery</span>
+                               <p className="text-white font-serif italic text-sm">{enhanced.atmosphericProfile.imagery}</p>
+                            </div>
+                        </div>
+                        <div>
+                           <span className="text-[8px] text-slate-500 uppercase font-bold">Best Time</span>
+                           <p className="text-accent-gold font-serif italic text-sm">{enhanced.atmosphericProfile.bestTime}</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="h-20 flex items-center justify-center italic text-slate-700 text-xs">Calibrating sensory sensors...</div>
+                    )}
+                    
+                    <MoodVisualizer initialPrompt={`Micro-aesthetic of ${book.title}, vibe: ${enhanced?.atmosphericProfile.imagery || book.genre}, tone: ${enhanced?.atmosphericProfile.tone || 'cinematic'}`} />
                 </div>
                 
-                <div className="flex flex-col gap-4">
-                    <button onClick={() => onToggleWishlist(book)} className={`py-4 rounded font-bold transition-all border ${isInWishlist ? 'bg-red-500/10 border-red-500/50 text-red-500' : 'bg-white/5 border-white/10 text-white hover:bg-white hover:text-black'}`}>
-                        {isInWishlist ? 'Remove from Archive' : 'Add to Archive'}
+                <div className="flex flex-col gap-3">
+                    <button 
+                      onClick={() => onToggleWishlist(book)} 
+                      className={`py-3 rounded text-[10px] font-bold transition-all border uppercase tracking-widest ${isInWishlist ? 'bg-accent-gold/10 border-accent-gold text-accent-gold' : 'bg-white/5 border-white/10 text-white hover:bg-white hover:text-black'}`}
+                    >
+                        {isInWishlist ? 'In Archive' : 'Store Locally'}
                     </button>
                     {book.buyLink || book.ebookUrl ? (
-                        <a href={book.buyLink || book.ebookUrl} target="_blank" rel="noreferrer" className="py-4 rounded bg-accent-gold text-black text-center font-bold hover:bg-yellow-500 transition-all">
-                            Access Full Text
+                        <a href={book.buyLink || book.ebookUrl} target="_blank" rel="noreferrer" className="py-3 rounded bg-accent-gold text-deep-bg text-center font-bold text-[10px] uppercase tracking-widest hover:bg-yellow-500 transition-all shadow-xl">
+                            Access Now
                         </a>
                     ) : null}
                 </div>
+              </div>
+
             </div>
+          ) : (
+            <CharacterChat bookTitle={book.title} author={book.author} onClose={() => setActiveTab('details')} />
+          )}
         </div>
       </div>
     </div>

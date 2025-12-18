@@ -1,3 +1,4 @@
+
 import React, { useRef } from 'react';
 import { Book } from '../types';
 import { BookCover } from './BookCover';
@@ -6,9 +7,11 @@ interface BookRowProps {
   title: string;
   books: Book[];
   onBookClick: (book: Book) => void;
+  // Added isRecommendation to props to handle the selection indicator and fix TS errors
+  isRecommendation?: boolean;
 }
 
-export const BookRow: React.FC<BookRowProps> = ({ title, books, onBookClick }) => {
+export const BookRow: React.FC<BookRowProps> = ({ title, books, onBookClick, isRecommendation }) => {
   const rowRef = useRef<HTMLDivElement>(null);
 
   const scroll = (direction: 'left' | 'right') => {
@@ -24,7 +27,15 @@ export const BookRow: React.FC<BookRowProps> = ({ title, books, onBookClick }) =
   return (
     <div className="mb-16 pl-6 md:pl-12 relative group/row animate-fade-in">
       <div className="flex items-center gap-4 mb-6">
-        <h2 className="text-2xl md:text-4xl text-white font-medium font-serif tracking-wide drop-shadow-lg">{title}</h2>
+        <h2 className="text-2xl md:text-4xl text-white font-medium font-serif tracking-wide drop-shadow-lg">
+          {title}
+          {/* Display a badge if this row contains AI-curated recommendations */}
+          {isRecommendation && (
+            <span className="ml-4 text-[10px] md:text-xs text-accent-gold uppercase tracking-widest bg-accent-gold/10 px-3 py-1 rounded-full border border-accent-gold/20 align-middle">
+              A.I. Curated
+            </span>
+          )}
+        </h2>
         <div className="h-[1px] bg-gradient-to-r from-accent-gold/50 to-transparent flex-1 mt-2"></div>
       </div>
       

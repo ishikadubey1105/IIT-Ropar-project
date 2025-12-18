@@ -5,11 +5,13 @@ export const LiveLibrarian: React.FC = () => {
   const [isActive, setIsActive] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [volume, setVolume] = useState(0);
+  const [error, setError] = useState<string | null>(null);
   const disconnectRef = useRef<(() => Promise<void>) | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const nextStartTimeRef = useRef<number>(0);
 
   const toggleSession = async () => {
+    setError(null);
     if (isActive) {
       if (disconnectRef.current) await disconnectRef.current();
       setIsActive(false);
@@ -32,23 +34,25 @@ export const LiveLibrarian: React.FC = () => {
           source.buffer = audioBuffer;
           source.connect(ctx.destination);
           
-          // Simple visualizer hook
           setVolume(Math.random() * 100); 
           setTimeout(() => setVolume(0), audioBuffer.duration * 1000);
 
-          // Queue audio
           const startTime = Math.max(nextStartTimeRef.current, ctx.currentTime);
           source.start(startTime);
           nextStartTimeRef.current = startTime + audioBuffer.duration;
         },
-        () => setIsActive(false)
+        () => {
+          setIsActive(false);
+          setIsConnecting(false);
+        }
       );
       
       disconnectRef.current = connection.disconnect;
       setIsActive(true);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to connect live", err);
-      alert("Could not connect to the Librarian. Please check microphone permissions.");
+      setError(err.message || "The librarian is currently unavailable. Please check microphone permissions.");
+      setTimeout(() => setError(null), 5000);
     } finally {
       setIsConnecting(false);
     }
@@ -56,7 +60,12 @@ export const LiveLibrarian: React.FC = () => {
 
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-2">
-      {isActive && (
+      {error && (
+        <div className="bg-red-950/90 border border-red-500/50 rounded-lg p-3 text-xs text-red-200 mb-2 animate-fade-in backdrop-blur-md shadow-2xl max-w-[240px] text-center">
+           {error}
+        </div>
+      )}
+      {isActive && !error && (
         <div className="bg-slate-900/90 border border-accent-gold/50 rounded-lg p-3 text-xs text-accent-gold mb-2 animate-fade-in backdrop-blur-sm shadow-xl max-w-[200px]">
            Listening... Ask about books or just chat about the weather.
         </div>
