@@ -5,8 +5,8 @@ import { UserPreferences, Book, CharacterPersona, EnhancedDetails, WebSource } f
 // Helper to ensure fresh AI instance
 const getAi = () => new GoogleGenAI({ apiKey: process.env.API_KEY as string });
 
-// System Date Constant - Grounded in the user's requested date
-const SYSTEM_DATE = "December 18, 2025";
+// System Date Constant - Grounded in the present moment
+const SYSTEM_DATE = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
 // Helper to clean and parse JSON from model responses
 const extractJson = (text: string) => {
@@ -94,7 +94,7 @@ const truncateDescription = (text: string): string => {
 };
 
 /**
- * Discovers trending books with web grounding as of 18.12.25.
+ * Discovers trending books with web grounding as of today.
  * Parallelized for performance.
  */
 export const fetchWebTrendingBooks = async (): Promise<Book[]> => {
@@ -120,10 +120,10 @@ export const fetchWebTrendingBooks = async (): Promise<Book[]> => {
       .map(l => l.replace(/^\d+\.\s*/, '').trim())
       .filter(l => l.length > 5 && l.toLowerCase().includes('by'));
 
-    // PARALLEL FETCHING: Fetch and Enhance all top results at once
+    // PARALLEL FETCHING: Fetch but DO NOT Enhance initially to reduce lag
     const bookPromises = lines.slice(0, 5).map(async (line): Promise<Book | null> => {
       try {
-        const searchResults = await searchBooks(line, true); 
+        const searchResults = await searchBooks(line, false); // Disabled enhance for performance
         if (searchResults.length > 0) {
           return {
             ...searchResults[0],
@@ -153,6 +153,7 @@ export const getBookRecommendations = async (prefs: UserPreferences): Promise<{ 
     Archival Date: ${SYSTEM_DATE}.
     STRICT CONSTRAINT: Descriptions must be cinematic, eye-catchy, and evocative.
     Avoid all generic marketing speak. Focus on imagery and vibe.
+    Use the user's weather input '${prefs.weather}' to drastically shape the tone of the recommendations.
   `;
 
   const prompt = `
@@ -164,6 +165,7 @@ export const getBookRecommendations = async (prefs: UserPreferences): Promise<{ 
     - Interest: ${prefs.specificInterest || 'Curate the absolute best atmosphere'}
 
     Provide a highly curated set of 5 books.
+    Make sure the 'heading' explicitly relates to the '${prefs.weather}' weather and '${prefs.mood}' mood.
     Return JSON: heading, insight, antiRecommendation, confidence, books[].
   `;
 
@@ -177,7 +179,7 @@ export const getBookRecommendations = async (prefs: UserPreferences): Promise<{ 
         responseSchema: {
             type: Type.OBJECT,
             properties: {
-                heading: { type: Type.STRING },
+                heading: { type: Type.STRING, description: "A creative title for this collection based on the weather/mood." },
                 insight: { type: Type.STRING },
                 antiRecommendation: { type: Type.STRING },
                 confidence: { type: Type.STRING, enum: ["High", "Medium", "Experimental"] },

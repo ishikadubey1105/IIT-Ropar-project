@@ -25,7 +25,6 @@ function App() {
   
   // UI State
   const [loading, setLoading] = useState(true);
-  const [secondaryLoading, setSecondaryLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState(""); 
   const [searchInputValue, setSearchInputValue] = useState(""); 
@@ -54,46 +53,62 @@ function App() {
   useEffect(() => {
     setWishlist(getWishlist());
     
-    const loadContent = async () => {
-      setLoading(true);
+    // Non-blocking data loading
+    const initializeLibrary = async () => {
+      setLoading(true); // Initial skeleton state
       setError(null);
+
+      // Define static categories for quick load
+      const staticCategories = [
+        { name: "Trending Now", query: "subject:fiction" },
+        { name: "Heritage & Lore", query: "subject:Indian literature" },
+        { name: "Suspense & Thrillers", query: "subject:thriller" },
+        { name: "Romantic Escapes", query: "subject:romance" },
+        { name: "Sci-Fi & Future", query: "subject:science fiction" }
+      ];
+
       try {
-        // STEP 1: LOAD PRIMARY TRENDS (Web Grounded)
-        const trending = await fetchWebTrendingBooks();
-        if (trending && trending.length > 0) {
-          setShelves([{ title: "Global Sensations", books: trending, isLive: true }]);
-          setFeaturedBook(trending[0]);
-          setLoading(false); // Enable interactive shell immediately
-        }
-
-        // STEP 2: LOAD SECONDARY CATEGORIES (Non-blocking)
-        setSecondaryLoading(true);
-        const staticCategories = [
-          { name: "Trending Now", query: "subject:fiction" },
-          { name: "Masterpiece Collection", query: "all-time best books classics" },
-          { name: "Heritage & Lore", query: "subject:Indian literature" },
-          { name: "Suspense & Thrillers", query: "subject:thriller" },
-          { name: "Romantic Escapes", query: "subject:romance" },
-          { name: "Sci-Fi & Future", query: "subject:science fiction" }
-        ];
-
-        const shelfPromises = staticCategories.map(async (cat) => {
-          const books = await getTrendingBooks(cat.query);
-          return { title: cat.name, books, isLive: false };
+        // 1. Fire both requests in parallel
+        const geminiPromise = fetchWebTrendingBooks().catch(e => {
+            console.error("Gemini sync failed", e);
+            return null;
         });
 
-        const extraShelves = await Promise.all(shelfPromises);
-        setShelves(prev => [...prev, ...extraShelves]);
+        const shelvesPromise = Promise.all(
+          staticCategories.map(async (cat) => {
+            const books = await getTrendingBooks(cat.query);
+            return { title: cat.name, books, isLive: false };
+          })
+        );
+
+        // 2. Wait for static shelves (Fast) and render immediately
+        const loadedShelves = await shelvesPromise;
+        setShelves(loadedShelves);
+        
+        // Remove full screen loading spinner here to let user see the app
+        // The Hero will stay in Skeleton mode until Gemini finishes
+        setLoading(false); 
+
+        // 3. Wait for Gemini (Slower) to update Hero
+        const trending = await geminiPromise;
+        if (trending && trending.length > 0) {
+          setFeaturedBook(trending[0]);
+          setShelves(prev => [{ title: "Global Sensations", books: trending, isLive: true }, ...prev]);
+        } else {
+            // Fallback if Gemini fails completely
+            if (loadedShelves.length > 0 && loadedShelves[0].books.length > 0) {
+                setFeaturedBook(loadedShelves[0].books[0]);
+            }
+        }
+
       } catch (err) {
-        console.error("Critical library load failure", err);
-        setError("Archives unreachable. Sync error.");
-      } finally {
+        console.error("Library initialization failed", err);
+        setError("Connection unstable. Showing offline archives.");
         setLoading(false);
-        setSecondaryLoading(false);
       }
     };
 
-    loadContent();
+    initializeLibrary();
 
     const handleWishlistUpdate = () => setWishlist(getWishlist());
     window.addEventListener('wishlist-updated', handleWishlistUpdate);
@@ -105,6 +120,7 @@ function App() {
     setView('home');
     setCurrentPrefs(prefs);
     setRecTitle(`Scanning the Atmosphere...`);
+    setRecommendations([]); 
 
     try {
       const result = await getBookRecommendations(prefs);
@@ -160,7 +176,7 @@ function App() {
       <div className="relative z-10">
         {view === 'curate' ? (
           <div className="pt-32 min-h-screen flex items-center justify-center">
-             < Questionnaire onComplete={handleCurateComplete} />
+             <Questionnaire onComplete={handleCurateComplete} />
           </div>
         ) : view === 'genres' ? (
           <GenresView onGenreSelect={handleGenreSelect} onBack={() => setView('home')} />
@@ -181,11 +197,13 @@ function App() {
                 onStart={() => setView('curate')} 
                 onBrowse={() => setView('genres')}
                 onMoreInfo={setSelectedBook}
+                isLoading={!featuredBook && loading} // Pass loading state to Hero
             />
 
-            <div className="relative -mt-32 pb-24 space-y-2 min-h-[400px]">
+            {/* Reduced negative margin from -mt-32 to -mt-16 to prevent overlap */}
+            <div className="relative -mt-16 pb-24 space-y-2 min-h-[400px]">
                 {error && (
-                  <div className="px-12 py-4 bg-red-950/20 border border-red-500/30 text-red-400 rounded-lg mx-12 text-center">
+                  <div className="px-12 py-4 bg-red-950/20 border border-red-500/30 text-red-400 rounded-lg mx-12 text-center mb-8">
                     {error}
                   </div>
                 )}
@@ -212,10 +230,11 @@ function App() {
                   />
                 ))}
 
-                {(loading || secondaryLoading) && (
+                {/* Only show spinner if absolutely nothing is loaded */}
+                {loading && shelves.length === 0 && (
                   <div className="flex flex-col items-center justify-center py-20 gap-4">
                     <div className="w-8 h-8 border-2 border-accent-gold border-t-transparent rounded-full animate-spin"></div>
-                    <div className="animate-pulse text-accent-gold font-serif italic text-sm">Synchronizing Dec 18, 2025 archives...</div>
+                    <div className="animate-pulse text-accent-gold font-serif italic text-sm">Synchronizing latest archives...</div>
                   </div>
                 )}
             </div>
