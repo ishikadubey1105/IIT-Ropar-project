@@ -59,8 +59,36 @@ export const BookDetailModal: React.FC<BookDetailModalProps> = ({ book, onClose,
                 <div className="flex-1">
                     <h2 className="text-3xl md:text-5xl font-serif font-bold text-white mb-1 leading-tight">{book.title}</h2>
                     <p className="text-lg text-accent-gold/80 font-serif italic">By {book.author}</p>
+                    
+                    {/* Metadata Row */}
+                    <div className="flex flex-wrap items-center gap-4 mt-3 text-[10px] font-mono uppercase tracking-widest text-slate-400">
+                        {book.publishedDate && (
+                          <span className="flex items-center gap-1.5 bg-white/5 px-2 py-1 rounded border border-white/5">
+                            <svg className="w-3 h-3 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                            {book.publishedDate.substring(0, 4)}
+                          </span>
+                        )}
+                        {book.pageCount && (
+                           <span className="flex items-center gap-1.5 bg-white/5 px-2 py-1 rounded border border-white/5">
+                             <svg className="w-3 h-3 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+                             {book.pageCount} pgs
+                           </span>
+                        )}
+                        {book.averageRating && (
+                           <span className="flex items-center gap-1.5 bg-white/5 px-2 py-1 rounded border border-white/5 text-slate-300">
+                             <svg className="w-3 h-3 text-accent-gold" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
+                             {book.averageRating}
+                           </span>
+                        )}
+                        {book.publisher && (
+                           <span className="opacity-60 hidden md:inline-block border-l border-white/10 pl-3">
+                             {book.publisher}
+                           </span>
+                        )}
+                    </div>
+                    
                     {enhanced && (
-                      <p className="text-xs md:text-sm text-slate-400 font-light mt-2 italic border-l border-accent-gold/40 pl-3">
+                      <p className="text-xs md:text-sm text-slate-400 font-light mt-4 italic border-l border-accent-gold/40 pl-3">
                         {enhanced.literaryIdentity}
                       </p>
                     )}
@@ -227,28 +255,61 @@ export const BookDetailModal: React.FC<BookDetailModalProps> = ({ book, onClose,
 
               {/* Sidebar Sensory Profile */}
               <div className="space-y-8">
-                <div className="bg-slate-900/40 p-6 rounded-xl border border-white/5 space-y-6">
-                    <h4 className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Atmospheric Profile</h4>
+                <div className="bg-slate-900/40 p-6 rounded-xl border border-white/5 space-y-6 shadow-2xl backdrop-blur-sm">
+                    <h4 className="text-slate-500 text-[10px] font-bold uppercase tracking-widest flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 bg-accent-gold rounded-full animate-pulse"></div>
+                      Atmospheric Profile
+                    </h4>
                     
                     {enhanced ? (
-                      <div className="space-y-6 animate-fade-in">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                               <span className="text-[8px] text-slate-500 uppercase font-bold">Tone</span>
-                               <p className="text-white font-serif italic text-sm">{enhanced.atmosphericProfile.tone}</p>
-                            </div>
-                            <div>
-                               <span className="text-[8px] text-slate-500 uppercase font-bold">Imagery</span>
-                               <p className="text-white font-serif italic text-sm">{enhanced.atmosphericProfile.imagery}</p>
-                            </div>
+                      <div className="space-y-4 animate-fade-in">
+                        {/* Narrative Tone Card */}
+                        <div className="flex items-start gap-4 p-3 bg-white/[0.03] rounded-lg border border-white/5 hover:border-accent-gold/20 transition-all group/item cursor-default">
+                          <div className="mt-1 text-accent-gold group-hover/item:scale-110 transition-transform bg-accent-gold/10 p-2 rounded-lg">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                          </div>
+                          <div>
+                            <span className="text-[8px] text-slate-500 uppercase font-bold tracking-widest block mb-0.5 opacity-60">Narrative Tone</span>
+                            <p className="text-white font-serif italic text-sm leading-snug">{enhanced.atmosphericProfile.tone}</p>
+                          </div>
                         </div>
-                        <div>
-                           <span className="text-[8px] text-slate-500 uppercase font-bold">Best Time</span>
-                           <p className="text-accent-gold font-serif italic text-sm">{enhanced.atmosphericProfile.bestTime}</p>
+
+                        {/* Visual Imagery Card */}
+                        <div className="flex items-start gap-4 p-3 bg-white/[0.03] rounded-lg border border-white/5 hover:border-accent-gold/20 transition-all group/item cursor-default">
+                          <div className="mt-1 text-accent-gold group-hover/item:scale-110 transition-transform bg-accent-gold/10 p-2 rounded-lg">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                          </div>
+                          <div>
+                            <span className="text-[8px] text-slate-500 uppercase font-bold tracking-widest block mb-0.5 opacity-60">Visual Imagery</span>
+                            <p className="text-white font-serif italic text-sm leading-snug">{enhanced.atmosphericProfile.imagery}</p>
+                          </div>
+                        </div>
+
+                        {/* Best Time Card */}
+                        <div className="flex items-start gap-4 p-3 bg-accent-gold/[0.04] rounded-lg border border-accent-gold/10 hover:border-accent-gold/30 transition-all group/item cursor-default">
+                          <div className="mt-1 text-accent-gold group-hover/item:scale-110 transition-transform bg-accent-gold/20 p-2 rounded-lg">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                          </div>
+                          <div>
+                            <span className="text-[8px] text-slate-500 uppercase font-bold tracking-widest block mb-0.5 opacity-80">Optimal Moment</span>
+                            <p className="text-accent-gold font-serif italic text-sm leading-snug font-bold">{enhanced.atmosphericProfile.bestTime}</p>
+                          </div>
                         </div>
                       </div>
                     ) : (
-                      <div className="h-20 flex items-center justify-center italic text-slate-700 text-xs">Calibrating sensory sensors...</div>
+                      <div className="h-24 flex items-center justify-center">
+                        <div className="flex gap-2">
+                          <div className="w-1.5 h-1.5 bg-accent-gold/40 rounded-full animate-bounce"></div>
+                          <div className="w-1.5 h-1.5 bg-accent-gold/40 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                          <div className="w-1.5 h-1.5 bg-accent-gold/40 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                        </div>
+                      </div>
                     )}
                     
                     <MoodVisualizer initialPrompt={`Micro-aesthetic of ${book.title}, vibe: ${enhanced?.atmosphericProfile.imagery || book.genre}, tone: ${enhanced?.atmosphericProfile.tone || 'cinematic'}`} />

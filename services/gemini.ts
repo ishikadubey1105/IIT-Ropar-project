@@ -1,6 +1,6 @@
 
 import { GoogleGenAI, Type, Modality, LiveServerMessage, Chat, GenerateContentResponse } from "@google/genai";
-import { UserPreferences, Book, CharacterPersona, EnhancedDetails, WebSource } from "../types";
+import { UserPreferences, Book, CharacterPersona, EnhancedDetails, WebSource, TrainingSignal } from "../types";
 
 // Helper to ensure fresh AI instance
 const getAi = () => new GoogleGenAI({ apiKey: process.env.API_KEY as string });
@@ -66,19 +66,17 @@ const formatError = (error: any, context: string): string => {
 
 /**
  * Transforms boring marketing descriptions into cinematic Atmosphera prose.
+ * USES: gemini-2.5-flash-lite-preview-02-05 for low latency responses.
  */
 const enhanceVibe = async (book: Partial<Book>): Promise<string> => {
   const ai = getAi();
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-2.5-flash-lite-preview-02-05",
       contents: `Rewrite this description for "${book.title}" to be poetic, cinematic, and atmospheric. 
       STRICT RULES: No marketing fluff, no 'bestseller' tags, max 180 chars. Focus on the soul of the story.
       Archival Date: ${SYSTEM_DATE}.
       Original: ${book.description}`,
-      config: {
-        thinkingConfig: { thinkingBudget: 0 }
-      }
     });
     return response.text?.trim() || book.description || "";
   } catch (e) {
@@ -94,15 +92,17 @@ const truncateDescription = (text: string): string => {
 };
 
 /**
- * Discovers trending books with web grounding as of today.
- * Parallelized for performance.
+ * Discovers trending books with web grounding focusing on 2025/Late 2024.
+ * USES: gemini-3-flash-preview with googleSearch tool for accurate, real-time data.
  */
 export const fetchWebTrendingBooks = async (): Promise<Book[]> => {
   const ai = getAi();
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: `Identify exactly 5 of the most trending or anticipated books globally for the week of ${SYSTEM_DATE}. 
+      contents: `Identify exactly 15 highly anticipated or trending fiction books for late 2024 and 2025. 
+      Focus on "BookTok" virality, literary awards, and "cool" factors.
+      Exclude generic bestsellers like Harry Potter or Colleen Hoover. Look for fresh, edgy voices.
       Return strictly as a list: Title by Author.`,
       config: {
         tools: [{ googleSearch: {} }],
@@ -121,13 +121,14 @@ export const fetchWebTrendingBooks = async (): Promise<Book[]> => {
       .filter(l => l.length > 5 && l.toLowerCase().includes('by'));
 
     // PARALLEL FETCHING: Fetch but DO NOT Enhance initially to reduce lag
-    const bookPromises = lines.slice(0, 5).map(async (line): Promise<Book | null> => {
+    // Using limit=5 for faster title resolution
+    const bookPromises = lines.slice(0, 15).map(async (line): Promise<Book | null> => {
       try {
-        const searchResults = await searchBooks(line, false); // Disabled enhance for performance
+        const searchResults = await searchBooks(line, false, 5); 
         if (searchResults.length > 0) {
           return {
             ...searchResults[0],
-            atmosphericRole: "Global Sensation",
+            atmosphericRole: "2025 Visionary",
             reasoning: `Archival Sync: ${SYSTEM_DATE}. High cultural relevance confirmed.`,
             sources: booksSources.length > 0 ? booksSources : undefined
           };
@@ -142,15 +143,88 @@ export const fetchWebTrendingBooks = async (): Promise<Book[]> => {
     return results.filter((b): b is Book => b !== null);
   } catch (error) {
     console.error("Web trending search failed.", error);
-    return getTrendingBooks(`bestselling fiction ${SYSTEM_DATE}`);
+    return getTrendingBooks(`subject:fiction 2025`);
   }
 };
 
-export const getBookRecommendations = async (prefs: UserPreferences): Promise<{ heading: string, insight: string, antiRecommendation: string, books: Book[], confidence: string }> => {
+/**
+ * Discovers "Hidden Gems" - unique, indie, or cult classics.
+ * USES: gemini-3-flash-preview with googleSearch.
+ */
+export const fetchHiddenGems = async (): Promise<Book[]> => {
   const ai = getAi();
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: `Find 15 "Hidden Gem" books that are aesthetically pleasing, cult classics, or critically acclaimed but under-read. 
+      Focus on: Speculative fiction, Dark Academia, Magical Realism, and International Fiction.
+      Return strictly as a list: Title by Author.`,
+      config: {
+        tools: [{ googleSearch: {} }],
+      },
+    });
+
+    const text = response.text || "";
+    const lines = text.split('\n')
+      .map(l => l.replace(/^\d+\.\s*/, '').trim())
+      .filter(l => l.length > 5 && l.toLowerCase().includes('by'));
+
+    // Using limit=5 for faster title resolution
+    const bookPromises = lines.slice(0, 15).map(async (line): Promise<Book | null> => {
+      try {
+        const searchResults = await searchBooks(line, false, 5);
+        if (searchResults.length > 0) {
+          return {
+            ...searchResults[0],
+            atmosphericRole: "Hidden Gem",
+            reasoning: `Curated for uniqueness and aesthetic value.`,
+          };
+        }
+        return null;
+      } catch (e) {
+        return null;
+      }
+    });
+
+    const results = await Promise.all(bookPromises);
+    return results.filter((b): b is Book => b !== null);
+  } catch (error) {
+    return [];
+  }
+};
+
+/**
+ * Curates recommendation engine.
+ * USES: gemini-3-pro-preview with thinkingConfig for complex reasoning.
+ * EXPANDED: Now accepts training signals to fine-tune recommendations.
+ * EXPANDED: Now uses Google Search to access a broader dataset.
+ */
+export const getBookRecommendations = async (prefs: UserPreferences, trainingSignals: TrainingSignal[] = []): Promise<{ heading: string, insight: string, antiRecommendation: string, books: Book[], confidence: string }> => {
+  const ai = getAi();
+  
+  // Construct Training Context from Neural Lab Signals
+  let trainingContext = "";
+  if (trainingSignals.length > 0) {
+    const positive = trainingSignals.filter(s => s.feedbackType === 'positive').map(s => `"${s.bookTitle}" (Note: ${s.contextNote}, Weight: ${s.atmosphericWeight})`);
+    const negative = trainingSignals.filter(s => s.feedbackType === 'negative').map(s => `"${s.bookTitle}" (Note: ${s.contextNote})`);
+    
+    trainingContext = `
+      ACTIVE TRAINING DATA (USER FEEDBACK):
+      The user has provided the following training signals. You MUST bias your selection based on this:
+      - POSITIVE REINFORCEMENT: ${positive.join('; ') || 'None'}. (Prioritize similar themes/vibes).
+      - NEGATIVE REINFORCEMENT: ${negative.join('; ') || 'None'}. (Strictly avoid similar themes/vibes).
+    `;
+  }
+
   const systemInstruction = `
     You are Atmosphera, an elite book recommendation engine.
     Archival Date: ${SYSTEM_DATE}.
+    
+    DATASET EXPANSION PROTOCOL:
+    - You have access to Google Search. USE IT to find books that perfectly match the user's specific request, even if they are niche, indie, or international.
+    - Do not limit yourself to the most popular 100 books. Dig deep.
+    - If the user asks for a specific niche (e.g., "Space Pirates"), search for "best space pirate books 2024 2025" or "underrated space opera".
+    
     STRICT CONSTRAINT: Descriptions must be cinematic, eye-catchy, and evocative.
     Avoid all generic marketing speak. Focus on imagery and vibe.
     Use the user's weather input '${prefs.weather}' to drastically shape the tone of the recommendations.
@@ -164,6 +238,8 @@ export const getBookRecommendations = async (prefs: UserPreferences): Promise<{ 
     - Setting: ${prefs.setting}
     - Interest: ${prefs.specificInterest || 'Curate the absolute best atmosphere'}
 
+    ${trainingContext}
+
     Provide a highly curated set of 5 books.
     Make sure the 'heading' explicitly relates to the '${prefs.weather}' weather and '${prefs.mood}' mood.
     Return JSON: heading, insight, antiRecommendation, confidence, books[].
@@ -171,10 +247,12 @@ export const getBookRecommendations = async (prefs: UserPreferences): Promise<{ 
 
   try {
     const response: GenerateContentResponse = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-3-pro-preview",
       contents: prompt,
       config: {
         systemInstruction,
+        tools: [{ googleSearch: {} }], // Dataset Expansion enabled
+        thinkingConfig: { thinkingBudget: 32768 }, // High thinking budget for deep curation
         responseMimeType: "application/json",
         responseSchema: {
             type: Type.OBJECT,
@@ -231,6 +309,7 @@ export const fetchEnhancedBookDetails = async (book: Book, prefs: UserPreference
       contents: prompt,
       config: {
         systemInstruction,
+        tools: [{ googleSearch: {} }], // Added Search Grounding for accurate metadata
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
@@ -273,9 +352,9 @@ export const fetchEnhancedBookDetails = async (book: Book, prefs: UserPreference
   }
 };
 
-export const searchBooks = async (query: string, enhance: boolean = false): Promise<Book[]> => {
+export const searchBooks = async (query: string, enhance: boolean = false, limit: number = 20): Promise<Book[]> => {
   try {
-    const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=5&printType=books`);
+    const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=${limit}&printType=books`); 
     const data = await res.json();
     const books = (data.items || []).map((item: any) => {
         const info = item.volumeInfo;
@@ -286,11 +365,17 @@ export const searchBooks = async (query: string, enhance: boolean = false): Prom
             description: truncateDescription(info.description),
             genre: info.categories?.[0] || 'General',
             publisher: info.publisher,
+            publishedDate: info.publishedDate,
+            pageCount: info.pageCount,
+            averageRating: info.averageRating,
+            ratingsCount: info.ratingsCount,
+            language: info.language,
             moodColor: '#475569',
             atmosphericRole: 'Immersive',
             cognitiveEffort: 'Moderate',
             excerpt: info.description?.substring(0, 100) || '',
-            coverUrl: info.imageLinks?.thumbnail?.replace('http:', 'https:')
+            coverUrl: info.imageLinks?.thumbnail?.replace('http:', 'https:'),
+            ebookUrl: info.previewLink?.replace('http:', 'https:') || info.infoLink?.replace('http:', 'https:')
         } as Book;
     });
 
@@ -308,7 +393,7 @@ export const searchBooks = async (query: string, enhance: boolean = false): Prom
 export const getTrendingBooks = async (context?: string): Promise<Book[]> => {
   try {
     const query = context || `subject:fiction ${SYSTEM_DATE}`;
-    const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=8&printType=books`);
+    const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=30&printType=books&orderBy=relevance`); 
     const data = await res.json();
     return (data.items || []).map((item: any) => {
         const info = item.volumeInfo;
@@ -319,11 +404,17 @@ export const getTrendingBooks = async (context?: string): Promise<Book[]> => {
             description: truncateDescription(info.description),
             genre: info.categories?.[0] || 'General',
             publisher: info.publisher,
+            publishedDate: info.publishedDate,
+            pageCount: info.pageCount,
+            averageRating: info.averageRating,
+            ratingsCount: info.ratingsCount,
+            language: info.language,
             moodColor: '#475569',
             atmosphericRole: 'Immersive',
             cognitiveEffort: 'Moderate',
             excerpt: info.description?.substring(0, 100) || '',
-            coverUrl: info.imageLinks?.thumbnail?.replace('http:', 'https:')
+            coverUrl: info.imageLinks?.thumbnail?.replace('http:', 'https:'),
+            ebookUrl: info.previewLink?.replace('http:', 'https:') || info.infoLink?.replace('http:', 'https:')
         } as Book;
     });
   } catch (e) {
@@ -338,6 +429,7 @@ export const getCharacterPersona = async (title: string, author: string): Promis
     model: "gemini-3-flash-preview",
     contents: `Identify a character from "${title}" by ${author}. Dec 2025 sync. Return JSON: name, greeting, systemInstruction.`,
     config: {
+      tools: [{ googleSearch: {} }], // Added Search Grounding
       responseMimeType: "application/json",
       responseSchema: {
         type: Type.OBJECT,
@@ -369,6 +461,10 @@ export const generateMoodImage = async (prompt: string): Promise<string> => {
   throw new Error("No imagery found.");
 };
 
+/**
+ * Edits an image based on a text prompt.
+ * USES: gemini-2.5-flash-image (Nano Banana) for image editing.
+ */
 export const editMoodImage = async (base64Url: string, prompt: string): Promise<string> => {
   const ai = getAi();
   const base64Data = base64Url.includes(',') ? base64Url.split(',')[1] : base64Url;

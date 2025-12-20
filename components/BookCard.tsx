@@ -110,8 +110,8 @@ export const BookCard: React.FC<BookCardProps> = ({ book, index, onClick }) => {
       
       <div className="p-5 flex flex-col h-full">
         {/* Header: Genre & Actions */}
-        <div className="mb-4 flex justify-between items-start gap-2">
-          <span className="text-[10px] uppercase tracking-widest font-bold text-accent-gold bg-accent-gold/10 border border-accent-gold/20 px-2 py-1 rounded-full backdrop-blur-md mt-1 truncate max-w-[50%]">
+        <div className="mb-4 flex justify-between items-center gap-2">
+          <span className="text-[10px] uppercase tracking-widest font-bold text-accent-gold bg-accent-gold/10 border border-accent-gold/20 px-2 py-1 rounded-full backdrop-blur-md truncate max-w-[50%]">
             {book.genre}
           </span>
           <div className="flex gap-2 shrink-0 relative z-20">

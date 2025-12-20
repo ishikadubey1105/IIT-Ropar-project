@@ -128,7 +128,7 @@ const GeneratedPlaceholder = ({ title, author, moodColor, showText, isError }: {
               </div>
            </div>
 
-           <div className="mt-auto pb-2">
+           <div className="mt-auto pb-2 pr-14">
               <h3 
                 className="font-serif font-bold text-white leading-[1.05] drop-shadow-lg tracking-wide mb-3 line-clamp-4"
                 style={{ 

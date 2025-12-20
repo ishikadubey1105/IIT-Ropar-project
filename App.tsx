@@ -8,8 +8,8 @@ import { Questionnaire } from './components/Questionnaire';
 import { LiveLibrarian } from './components/LiveLibrarian';
 import { BookCard } from './components/BookCard';
 import { GenresView } from './components/GenresView';
-import { getBookRecommendations, searchBooks, getTrendingBooks, fetchWebTrendingBooks } from './services/gemini';
-import { getWishlist, toggleWishlist, isInWishlist } from './services/storage';
+import { getBookRecommendations, searchBooks, getTrendingBooks, fetchWebTrendingBooks, fetchHiddenGems } from './services/gemini';
+import { getWishlist, toggleWishlist, isInWishlist, getTrainingSignals } from './services/storage';
 import { UserPreferences, Book } from './types';
 
 function App() {
@@ -58,48 +58,53 @@ function App() {
       setLoading(true); // Initial skeleton state
       setError(null);
 
-      // Define static categories for quick load
-      const staticCategories = [
-        { name: "Trending Now", query: "subject:fiction" },
+      // MIX: Static API Categories + Dynamic "Unlimited" feel keywords
+      const dynamicCategories = [
+        { name: "Viral Sensations 2025", query: "subject:fiction BookTok 2024 2025" },
+        { name: "Cyberpunk & Future", query: "subject:science fiction cyberpunk" },
+        { name: "Dark Academia", query: "subject:fiction dark academia" },
         { name: "Heritage & Lore", query: "subject:Indian literature" },
-        { name: "Suspense & Thrillers", query: "subject:thriller" },
-        { name: "Romantic Escapes", query: "subject:romance" },
-        { name: "Sci-Fi & Future", query: "subject:science fiction" }
+        { name: "Psychological Thrillers", query: "subject:thriller psychological" },
+        { name: "Modern Romantasy", query: "subject:fantasy romance" }
       ];
 
       try {
-        // 1. Fire both requests in parallel
-        const geminiPromise = fetchWebTrendingBooks().catch(e => {
-            console.error("Gemini sync failed", e);
-            return null;
-        });
+        // 1. Fire Critical AI requests (2025 Trends & Hidden Gems)
+        const trendingPromise = fetchWebTrendingBooks().catch(e => null);
+        const gemsPromise = fetchHiddenGems().catch(e => null);
 
+        // 2. Fire Google Books API requests (Volume)
         const shelvesPromise = Promise.all(
-          staticCategories.map(async (cat) => {
+          dynamicCategories.map(async (cat) => {
             const books = await getTrendingBooks(cat.query);
             return { title: cat.name, books, isLive: false };
           })
         );
 
-        // 2. Wait for static shelves (Fast) and render immediately
+        // 3. Render Static Shelves First (Speed)
         const loadedShelves = await shelvesPromise;
         setShelves(loadedShelves);
-        
-        // Remove full screen loading spinner here to let user see the app
-        // The Hero will stay in Skeleton mode until Gemini finishes
-        setLoading(false); 
+        setLoading(false); // UI Interactive
 
-        // 3. Wait for Gemini (Slower) to update Hero
-        const trending = await geminiPromise;
-        if (trending && trending.length > 0) {
-          setFeaturedBook(trending[0]);
-          setShelves(prev => [{ title: "Global Sensations", books: trending, isLive: true }, ...prev]);
-        } else {
-            // Fallback if Gemini fails completely
-            if (loadedShelves.length > 0 && loadedShelves[0].books.length > 0) {
-                setFeaturedBook(loadedShelves[0].books[0]);
-            }
-        }
+        // 4. Inject AI Content as it arrives (Quality)
+        const [trending, gems] = await Promise.all([trendingPromise, gemsPromise]);
+        
+        setShelves(prev => {
+          const newShelves = [...prev];
+          
+          if (gems && gems.length > 0) {
+            newShelves.unshift({ title: "Hidden Gems & Cult Classics", books: gems, isLive: true });
+          }
+          
+          if (trending && trending.length > 0) {
+            newShelves.unshift({ title: "2025 Visionaries", books: trending, isLive: true });
+            setFeaturedBook(trending[0]); // Feature the top trend
+          } else if (prev.length > 0 && prev[0].books.length > 0) {
+            setFeaturedBook(prev[0].books[0]); // Fallback feature
+          }
+          
+          return newShelves;
+        });
 
       } catch (err) {
         console.error("Library initialization failed", err);
@@ -123,7 +128,10 @@ function App() {
     setRecommendations([]); 
 
     try {
-      const result = await getBookRecommendations(prefs);
+      // FETCH TRAINING SIGNALS (The "Train model accordingly" part)
+      const signals = getTrainingSignals();
+      const result = await getBookRecommendations(prefs, signals);
+      
       setRecommendations(result.books);
       setRecTitle(result.heading);
       
@@ -144,7 +152,8 @@ function App() {
     setSearchQuery(query);
     setSearchInputValue(query); 
     try {
-      const books = await searchBooks(query);
+      // Use higher limit for search grid to feel unlimited
+      const books = await searchBooks(query, false, 40); 
       setSearchResults(books);
     } catch (e: any) {
       setError("Search failed.");
