@@ -12,7 +12,8 @@ interface NavbarProps {
   onSearch: (q: string) => void;
   searchValue: string;
   onSearchChange: (val: string) => void;
-  activeView: 'home' | 'curate' | 'search' | 'genres';
+  // Added 'recommendations' to support the focused recommendation view state from App.tsx
+  activeView: 'home' | 'curate' | 'search' | 'genres' | 'recommendations';
   className?: string;
 }
 
@@ -68,7 +69,8 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div className="hidden md:flex gap-8 text-base font-medium text-slate-300">
           <button 
             onClick={onHome} 
-            className={`transition-colors border-b-2 pb-1 ${activeView === 'home' ? 'text-white border-accent-gold' : 'border-transparent hover:text-white hover:border-accent-gold/50'}`}
+            // Highlight Home when in home or focused recommendations view
+            className={`transition-colors border-b-2 pb-1 ${activeView === 'home' || activeView === 'recommendations' ? 'text-white border-accent-gold' : 'border-transparent hover:text-white hover:border-accent-gold/50'}`}
           >
             Home
           </button>

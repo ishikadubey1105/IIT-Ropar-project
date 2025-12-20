@@ -71,24 +71,30 @@ export const BookCard: React.FC<BookCardProps> = ({ book, index, onClick }) => {
     e.stopPropagation();
     const shareData = {
       title: book.title,
-      text: `Check out "${book.title}" by ${book.author} on Atmosphera.`,
+      text: `Atmosphera Discovery: "${book.title}" by ${book.author}`,
       url: book.ebookUrl || window.location.href
     };
 
+    // Try native share API first
     if (navigator.share) {
       try {
         await navigator.share(shareData);
+        return;
       } catch (err) {
-        console.debug("Share cancelled");
+        console.debug("Native share cancelled or failed, falling back to clipboard.");
       }
-    } else {
-      try {
-        await navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
-        setIsShared(true);
-        setTimeout(() => setIsShared(false), 2000);
-      } catch (err) {
-        console.error("Clipboard failed", err);
-      }
+    }
+
+    // Fallback: Copy to clipboard
+    try {
+      const shareText = `${shareData.text}\nView at: ${shareData.url}`;
+      await navigator.clipboard.writeText(shareText);
+      setIsShared(true);
+      setTimeout(() => setIsShared(false), 2000);
+    } catch (err) {
+      console.error("Clipboard copy failed", err);
+      setError("Unable to copy link.");
+      setTimeout(() => setError(null), 3000);
     }
   };
 
@@ -100,29 +106,38 @@ export const BookCard: React.FC<BookCardProps> = ({ book, index, onClick }) => {
       className="group relative w-full bg-black/60 hover:bg-black/90 backdrop-blur-md rounded-xl overflow-hidden shadow-2xl transition-all duration-500 flex flex-col border border-white/10 cursor-pointer h-full"
       style={{ 
         animationDelay: `${index * 150}ms`,
-        transform: isHovered ? 'scale(1.05) translateY(-8px)' : 'scale(1) translateY(0)',
+        transform: isHovered ? 'scale(1.03) translateY(-4px)' : 'scale(1) translateY(0)',
         borderColor: isHovered ? book.moodColor : 'rgba(255,255,255,0.1)',
-        boxShadow: isHovered ? `0 20px 50px -12px ${book.moodColor}60, 0 0 25px -5px ${book.moodColor}40` : undefined,
+        boxShadow: isHovered ? `0 20px 50px -12px ${book.moodColor}40` : undefined,
         zIndex: isHovered ? 20 : 1
       }}
     >
-      <div className="absolute top-0 left-0 w-full h-1.5 transition-opacity duration-300" style={{ backgroundColor: book.moodColor }} />
+      <div className="absolute top-0 left-0 w-full h-1 transition-opacity duration-300" style={{ backgroundColor: book.moodColor }} />
       
+      {/* Intelligence Badges */}
+      {book.reasoning && book.reasoning.length < 50 && (
+          <div className="absolute top-3 left-3 z-30 pointer-events-none">
+              <div className="bg-black/80 backdrop-blur-md border border-white/10 px-2 py-1 rounded text-[8px] font-bold uppercase tracking-widest text-accent-gold flex items-center gap-1.5 shadow-xl">
+                  <div className="w-1 h-1 bg-accent-gold rounded-full animate-pulse"></div>
+                  Neural Match
+              </div>
+          </div>
+      )}
+
       <div className="p-5 flex flex-col h-full">
-        {/* Header: Genre & Actions */}
         <div className="mb-4 flex justify-between items-center gap-2">
-          <span className="text-[10px] uppercase tracking-widest font-bold text-accent-gold bg-accent-gold/10 border border-accent-gold/20 px-2 py-1 rounded-full backdrop-blur-md truncate max-w-[50%]">
+          <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 bg-white/5 border border-white/10 px-2 py-1 rounded-full truncate max-w-[50%]">
             {book.genre}
           </span>
           <div className="flex gap-2 shrink-0 relative z-20">
             <button
               onClick={handleShare}
-              className={`flex items-center justify-center w-8 h-8 rounded-full border transition-all duration-300 bg-black/20
+              className={`flex items-center justify-center w-8 h-8 rounded-full border transition-all duration-300 bg-black/40
                 ${isShared 
-                  ? 'bg-emerald-500/20 border-emerald-500 text-emerald-500' 
-                  : 'border-slate-600 text-slate-400 hover:border-blue-400 hover:text-blue-400'}
+                  ? 'bg-accent-gold border-accent-gold text-black' 
+                  : 'border-white/10 text-slate-400 hover:border-accent-gold hover:text-accent-gold'}
               `}
-              title={isShared ? "Link copied to clipboard!" : "Share this discovery via link or apps"}
+              title={isShared ? "Link copied to clipboard!" : "Copy link or share"}
             >
               {isShared ? (
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
@@ -131,27 +146,14 @@ export const BookCard: React.FC<BookCardProps> = ({ book, index, onClick }) => {
               )}
             </button>
 
-            {book.ebookUrl && (
-              <a 
-                href={book.ebookUrl} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="flex items-center justify-center w-8 h-8 rounded-full border border-slate-600 transition-all duration-300 hover:border-accent-gold hover:text-accent-gold text-slate-400 bg-black/20"
-                title="Read E-Book on Google Books (Opens in new tab)"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
-              </a>
-            )}
-
             <button
               onClick={handleToggleSave}
-              className={`flex items-center justify-center w-8 h-8 rounded-full border transition-all duration-300 bg-black/20
+              className={`flex items-center justify-center w-8 h-8 rounded-full border transition-all duration-300 bg-black/40
                 ${isSaved 
-                  ? 'bg-red-500/20 border-red-500 text-red-500' 
-                  : 'border-slate-600 text-slate-400 hover:border-white hover:text-white'}
+                  ? 'bg-accent-gold/20 border-accent-gold text-accent-gold' 
+                  : 'border-white/10 text-slate-400 hover:border-white hover:text-white'}
               `}
-              title={isSaved ? "Remove from your Personal Archive" : "Save to your Personal Archive"}
+              title={isSaved ? "Saved to Archive" : "Save for later"}
             >
                {isSaved ? (
                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" /></svg>
@@ -162,8 +164,7 @@ export const BookCard: React.FC<BookCardProps> = ({ book, index, onClick }) => {
           </div>
         </div>
         
-        {/* Book Cover Container */}
-        <div className="relative aspect-[2/3] w-full rounded-lg overflow-hidden mb-4 shadow-lg group-hover:shadow-accent-gold/10 transition-shadow bg-slate-800">
+        <div className="relative aspect-[2/3] w-full rounded-lg overflow-hidden mb-4 shadow-lg bg-slate-800">
            <BookCover 
              isbn={book.isbn} 
              title={book.title} 
@@ -181,13 +182,12 @@ export const BookCard: React.FC<BookCardProps> = ({ book, index, onClick }) => {
            <button 
              onClick={handlePlayPreview}
              disabled={isAudioLoading}
-             title={isAudioLoading ? "Synthesizing audio preview..." : isPlaying ? "Stop audio playback" : "Listen to an AI-narrated excerpt"}
              className={`absolute bottom-3 right-3 w-10 h-10 rounded-full flex items-center justify-center backdrop-blur-md shadow-xl border transition-all duration-300 z-20
                ${isAudioLoading 
-                 ? 'bg-black/80 text-accent-gold border-accent-gold/50 cursor-wait scale-100'
+                 ? 'bg-black/80 text-accent-gold border-accent-gold/50 cursor-wait'
                  : isPlaying 
                    ? 'bg-accent-gold text-black border-accent-gold' 
-                   : 'bg-black/40 text-white border-white/20 hover:bg-accent-gold hover:text-black hover:border-accent-gold hover:scale-110'}
+                   : 'bg-black/40 text-white border-white/10 hover:bg-accent-gold hover:text-black hover:border-accent-gold'}
              `}
            >
               {isAudioLoading ? (
@@ -203,15 +203,16 @@ export const BookCard: React.FC<BookCardProps> = ({ book, index, onClick }) => {
            </button>
         </div>
 
-        {/* Info */}
         <div className="mt-auto relative z-10">
-           <h3 className="text-xl font-serif font-bold text-white mb-1 line-clamp-1 leading-tight group-hover:text-accent-gold transition-colors">{book.title}</h3>
-           <p className="text-sm text-slate-400 font-medium">{book.author}</p>
-           {book.publisher && (
-             <p className="text-[9px] text-slate-500 mt-1 opacity-60 uppercase tracking-tighter truncate font-sans">
-               {book.publisher}
-             </p>
+           {book.reasoning && (
+               <div className="mb-2">
+                   <p className="text-[10px] text-accent-gold/80 italic font-serif leading-tight line-clamp-2">
+                       {book.reasoning}
+                   </p>
+               </div>
            )}
+           <h3 className="text-lg font-serif font-bold text-white mb-0.5 line-clamp-1 group-hover:text-accent-gold transition-colors">{book.title}</h3>
+           <p className="text-xs text-slate-400 font-medium truncate">{book.author}</p>
         </div>
       </div>
     </div>

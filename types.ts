@@ -30,15 +30,29 @@ export interface Book {
   ratingsCount?: number;
 
   isEbook?: boolean;
-  saleability?: string;
-  price?: {
-    amount: number;
-    currencyCode: string;
-  };
   buyLink?: string;
-  accessViewStatus?: string;
-  pdfAvailable?: boolean;
-  epubAvailable?: boolean;
+}
+
+export interface SessionHistory {
+  viewed: string[];
+  skipped: string[];
+  engaged: string[];
+  wishlistActions: string[];
+  searchQueries: string[];
+}
+
+export interface AtmosphericIntelligence {
+  sessionNarration: string;
+  featuredBookTitle: string;
+  shelfOrder: string[];
+  antiRecommendation: { title: string; reason: string };
+  readLater: { title: string; optimalMoment: string };
+  intent: {
+    primary: string;
+    direction: string;
+    tolerance: string;
+  };
+  reorderedPool: { title: string; rankingReason: string; confidence: 'High' | 'Medium' | 'Exploratory' }[];
 }
 
 export interface EnhancedDetails {
@@ -142,9 +156,10 @@ export interface UserPreferences {
   preferredFormat: 'text' | 'audio';
 }
 
+// Fixed missing StepProps member
 export interface StepProps {
   onNext: (data: Partial<UserPreferences>) => void;
-  onBack: () => void;
+  onBack?: () => void;
   data: UserPreferences;
 }
 
