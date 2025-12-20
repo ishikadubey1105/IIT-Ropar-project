@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface BookCoverProps {
   isbn?: string;
@@ -13,58 +13,89 @@ interface BookCoverProps {
 
 const LoadingPlaceholder = ({ moodColor }: { moodColor: string }) => {
   return (
-    <div className="absolute inset-0 z-20 bg-[#0a0a0c] flex items-center justify-center overflow-hidden">
-      {/* Ambient Mood Glow */}
+    <div className="absolute inset-0 z-20 bg-[#070709] flex items-center justify-center overflow-hidden">
+      {/* Background Noise Texture */}
       <div 
-        className="absolute inset-0 opacity-30 blur-[60px] transition-all duration-1000 animate-pulse-slow"
+        className="absolute inset-0 opacity-[0.03] pointer-events-none"
         style={{ 
-          background: `radial-gradient(circle at center, ${moodColor}, transparent 70%)` 
-        }} 
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` 
+        }}
       />
-      
-      {/* Subtle Grid Texture */}
+
+      {/* Primary Atmospheric Glows */}
       <div 
-        className="absolute inset-0 opacity-[0.07]" 
+        className="absolute inset-0 opacity-30 blur-[100px] animate-pulse-slow"
         style={{ 
-          backgroundImage: 'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)',
-          backgroundSize: '20px 20px'
+          background: `radial-gradient(circle at 50% 50%, ${moodColor}, transparent 80%)` 
         }} 
       />
 
-      {/* Central Loader Mechanism */}
-      <div className="relative w-20 h-20 flex items-center justify-center">
-        {/* Outer Ring */}
-        <div className="absolute inset-0 border border-white/10 rounded-full animate-[spin_10s_linear_infinite]" />
-        
-        {/* Inner Moving Arcs */}
-        <div 
-            className="absolute inset-0 border-t border-l border-white/40 rounded-full animate-[spin_3s_linear_infinite]"
-            style={{ borderColor: `${moodColor}80 transparent transparent transparent` }}
-        />
-        <div 
-            className="absolute inset-4 border-b border-r border-white/20 rounded-full animate-[spin_2s_linear_infinite_reverse]" 
-        />
-        
-        {/* Core Pulse */}
-        <div className="w-1.5 h-1.5 bg-white/80 rounded-full shadow-[0_0_15px_rgba(255,255,255,0.5)] animate-pulse" />
+      <div 
+        className="absolute -top-1/4 -left-1/4 w-full h-full opacity-10 blur-[120px] animate-float"
+        style={{ 
+          background: `radial-gradient(circle at center, ${moodColor}, transparent 70%)`,
+          animationDuration: '8s'
+        }} 
+      />
+
+      {/* Abstract Geometric Elements */}
+      <div className="relative w-32 h-48 flex items-center justify-center">
+        {/* The Frame Assembly Animation */}
+        <div className="absolute inset-0 border border-white/5 rounded-sm">
+          <div className="absolute top-0 left-0 w-4 h-[1px] bg-white/20" />
+          <div className="absolute top-0 left-0 w-[1px] h-4 bg-white/20" />
+          <div className="absolute bottom-0 right-0 w-4 h-[1px] bg-white/20" />
+          <div className="absolute bottom-0 right-0 w-[1px] h-4 bg-white/20" />
+        </div>
+
+        {/* Pulsing Core Vibe */}
+        <div className="relative w-16 h-16">
+          <div 
+            className="absolute inset-0 rounded-full blur-xl animate-pulse"
+            style={{ backgroundColor: moodColor, opacity: 0.4 }}
+          />
+          <div 
+            className="absolute inset-0 border border-white/10 rounded-full animate-[spin_10s_linear_infinite]"
+          />
+          <div 
+            className="absolute inset-2 border border-white/10 rounded-full animate-[spin_6s_linear_infinite_reverse]"
+          />
+          <div 
+            className="absolute inset-[35%] rounded-full shadow-[0_0_15px_rgba(255,255,255,0.2)] animate-pulse"
+            style={{ backgroundColor: moodColor }}
+          />
+        </div>
+
+        {/* Floating "Data Fragments" */}
+        <div className="absolute top-4 right-4 w-1 h-1 bg-white/20 rounded-full animate-ping" style={{ animationDuration: '3s' }} />
+        <div className="absolute bottom-8 left-6 w-1.5 h-[1px] bg-white/10 animate-pulse" />
+        <div className="absolute top-1/2 -right-2 w-4 h-[1px] bg-white/5 rotate-90" />
       </div>
-      
-      {/* Scanning Line */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/[0.02] to-transparent animate-slide-up pointer-events-none" />
 
-      {/* Status Text */}
-      <div className="absolute bottom-8 left-0 right-0 text-center">
-         <span className="text-[8px] font-mono uppercase tracking-[0.3em] text-white/30 animate-pulse">
-            Syncing Archive
-         </span>
+      {/* Scanning Calibration Bar */}
+      <div 
+        className="absolute inset-x-0 h-[10%] opacity-20 pointer-events-none animate-[slideUp_4s_linear_infinite]"
+        style={{ 
+          background: `linear-gradient(to bottom, transparent, ${moodColor}, transparent)`,
+        }}
+      />
+
+      {/* Calibration Text */}
+      <div className="absolute bottom-8 left-0 right-0 flex flex-col items-center gap-3">
+        <div className="flex gap-1.5">
+          <div className="w-1 h-1 rounded-full animate-bounce [animation-delay:-0.3s]" style={{ backgroundColor: moodColor }} />
+          <div className="w-1 h-1 rounded-full animate-bounce [animation-delay:-0.15s]" style={{ backgroundColor: moodColor }} />
+          <div className="w-1 h-1 rounded-full animate-bounce" style={{ backgroundColor: moodColor }} />
+        </div>
+        <span className="text-[7px] font-mono uppercase tracking-[0.5em] text-white/30 animate-pulse">
+          Retrieving Resonance
+        </span>
       </div>
     </div>
   );
 };
 
-// Visual generator for covers when image is missing
 const GeneratedPlaceholder = ({ title, author, moodColor, showText, isError }: { title: string, author: string, moodColor: string, showText: boolean, isError?: boolean }) => {
-  // Deterministic variants based on title
   const seed = title.charCodeAt(0) + (author?.length || 0);
   const variant = seed % 4;
 
@@ -72,10 +103,9 @@ const GeneratedPlaceholder = ({ title, author, moodColor, showText, isError }: {
     <div 
       className="absolute inset-0 flex flex-col justify-between p-4 bg-slate-900 transition-all duration-700 overflow-hidden"
       style={{
-        background: `linear-gradient(135deg, ${moodColor}CC 0%, #0f172a 100%)`
+        background: `linear-gradient(135deg, ${moodColor}CC 0%, #0a0a0c 100%)`
       }}
     >
-      {/* Texture Layer */}
       <div 
         className="absolute inset-0 opacity-20 mix-blend-overlay pointer-events-none"
         style={{ 
@@ -83,14 +113,12 @@ const GeneratedPlaceholder = ({ title, author, moodColor, showText, isError }: {
         }}
       />
 
-      {/* Error Specific Texture: Diagonal Scanlines */}
       {isError && (
         <div className="absolute inset-0 opacity-10 pointer-events-none" 
              style={{ backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 10px, #000 10px, #000 11px)' }} 
         />
       )}
       
-      {/* Dynamic Geometric Elements based on variant */}
       {variant === 0 && (
         <>
             <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full border-[1px] border-white/10 opacity-50" />
@@ -117,10 +145,8 @@ const GeneratedPlaceholder = ({ title, author, moodColor, showText, isError }: {
         </>
       )}
 
-      {/* Typography Layer */}
       {showText && (
         <div className="relative z-10 flex flex-col h-full justify-between animate-fade-in">
-           {/* Top branding seal */}
            <div className="flex justify-between items-start opacity-60">
               <div className="w-6 h-[1px] bg-white/50 mt-1.5"></div>
               <div className={`text-[8px] font-mono tracking-[0.2em] uppercase ${isError ? 'text-red-300/80' : 'text-white/80'}`}>
@@ -148,7 +174,6 @@ const GeneratedPlaceholder = ({ title, author, moodColor, showText, isError }: {
         </div>
       )}
 
-      {/* Error/Reconstruction specific glitch accent */}
       {isError && (
         <div className="absolute top-0 right-0 p-2 opacity-50">
              <div className="flex gap-1">
@@ -200,7 +225,6 @@ export const BookCover: React.FC<BookCoverProps> = ({
     const fetchCover = async () => {
       let foundUrl: string | null = null;
       
-      // 1. Try OpenLibrary via ISBN
       if (isbn) {
         const cleanId = isbn.replace(/[^0-9X]/gi, '');
         const olUrl = `https://covers.openlibrary.org/b/isbn/${cleanId}-L.jpg?default=false`;
@@ -209,7 +233,6 @@ export const BookCover: React.FC<BookCoverProps> = ({
         }
       }
 
-      // 2. Try Google Books API via Title/Author
       if (!foundUrl) {
         try {
           const query = `intitle:${encodeURIComponent(title)} ${author ? `inauthor:${encodeURIComponent(author)}` : ''}`;
@@ -265,7 +288,6 @@ export const BookCover: React.FC<BookCoverProps> = ({
         />
       ) : null}
       
-      {/* Shine effect overlay for all covers */}
       <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
       <div className="absolute inset-0 ring-1 ring-inset ring-white/10 pointer-events-none" />
     </div>

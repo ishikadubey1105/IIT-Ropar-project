@@ -33,6 +33,20 @@ export interface Book {
   buyLink?: string;
 }
 
+export interface SensoryPairing {
+  sound: string;
+  scent: string;
+  sip: string;
+  lighting: string;
+}
+
+export interface PulseUpdate {
+  title: string;
+  snippet: string;
+  url: string;
+  type: 'Release' | 'Award' | 'Viral' | 'Event';
+}
+
 export interface SessionHistory {
   viewed: string[];
   skipped: string[];
@@ -53,6 +67,7 @@ export interface AtmosphericIntelligence {
     tolerance: string;
   };
   reorderedPool: { title: string; rankingReason: string; confidence: 'High' | 'Medium' | 'Exploratory' }[];
+  additionalDiscoveryQuery?: string;
 }
 
 export interface EnhancedDetails {
@@ -78,6 +93,7 @@ export interface EnhancedDetails {
     fullSynopsis: string;
     authorBackground: string;
   };
+  sensoryPairing: SensoryPairing;
 }
 
 export interface ReadingProgress {
@@ -156,7 +172,6 @@ export interface UserPreferences {
   preferredFormat: 'text' | 'audio';
 }
 
-// Fixed missing StepProps member
 export interface StepProps {
   onNext: (data: Partial<UserPreferences>) => void;
   onBack?: () => void;
