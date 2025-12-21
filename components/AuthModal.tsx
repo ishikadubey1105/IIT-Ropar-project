@@ -51,9 +51,9 @@ export const AuthModal: React.FC = () => {
 
                     <button
                         onClick={guestLogin}
-                        className="text-xs uppercase tracking-widest text-slate-500 hover:text-white transition-colors"
+                        className="text-xs uppercase tracking-widest text-slate-400 hover:text-accent-gold transition-colors border-b border-transparent hover:border-accent-gold pb-1"
                     >
-                        Enter as Guest
+                        ...Enter as Guest...
                     </button>
                 </div>
 
