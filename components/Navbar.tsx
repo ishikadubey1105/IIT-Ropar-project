@@ -14,28 +14,34 @@ interface NavbarProps {
   onSearchChange: (val: string) => void;
   // Added 'recommendations' to support the focused recommendation view state from App.tsx
   activeView: 'home' | 'curate' | 'search' | 'genres' | 'recommendations';
+  onSettingsClick?: () => void;
   className?: string;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ 
-  onHome, 
-  onWishlist, 
-  onSearchClick, 
+import { useAuth } from '../contexts/AuthContext';
+
+export const Navbar: React.FC<NavbarProps> = ({
+  onHome,
+  onWishlist,
+  onSearchClick,
   onGenresClick,
-  onSearch, 
+  onSearch,
   searchValue,
   onSearchChange,
   activeView,
-  className = '' 
+  onSettingsClick,
+  className = ''
 }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeRead, setActiveRead] = useState<Book | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { user, logout } = useAuth();
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
     window.addEventListener('scroll', handleScroll);
-    
+
     setActiveRead(getActiveRead());
     const handleActiveUpdate = () => setActiveRead(getActiveRead());
     window.addEventListener('active-read-updated', handleActiveUpdate);
@@ -67,21 +73,21 @@ export const Navbar: React.FC<NavbarProps> = ({
           ATMOSPHERA
         </button>
         <div className="hidden md:flex gap-8 text-base font-medium text-slate-300">
-          <button 
-            onClick={onHome} 
+          <button
+            onClick={onHome}
             // Highlight Home when in home or focused recommendations view
             className={`transition-colors border-b-2 pb-1 ${activeView === 'home' || activeView === 'recommendations' ? 'text-white border-accent-gold' : 'border-transparent hover:text-white hover:border-accent-gold/50'}`}
           >
             Home
           </button>
-          <button 
-            onClick={onGenresClick} 
+          <button
+            onClick={onGenresClick}
             className={`transition-colors border-b-2 pb-1 ${activeView === 'genres' ? 'text-white border-accent-gold' : 'border-transparent hover:text-white hover:border-accent-gold/50'}`}
           >
             Genres
           </button>
-          <button 
-            onClick={onSearchClick} 
+          <button
+            onClick={onSearchClick}
             className={`transition-colors border-b-2 pb-1 ${activeView === 'search' ? 'text-white border-accent-gold' : 'border-transparent hover:text-white hover:border-accent-gold/50'}`}
           >
             Search
@@ -95,40 +101,70 @@ export const Navbar: React.FC<NavbarProps> = ({
       <div className="flex items-center gap-4 md:gap-8">
         {activeRead && (
           <div className="hidden lg:flex items-center gap-4 bg-white/10 rounded-full px-4 py-2 animate-fade-in border border-white/10 hover:border-accent-gold/50 transition-colors cursor-pointer group relative">
-             <div className="w-8 h-10 rounded-sm overflow-hidden shadow-sm shrink-0">
-               <BookCover 
-                 isbn={activeRead.isbn} 
-                 title={activeRead.title} 
-                 author={activeRead.author} 
-                 moodColor={activeRead.moodColor} 
-                 showText={false}
-                 className="w-full h-full"
-               />
-             </div>
-             
-             <div className="flex flex-col">
-               <span className="text-[10px] uppercase text-slate-400 font-bold tracking-wider">Reading Now</span>
-               <span className="text-sm font-serif text-white max-w-[150px] truncate">{activeRead.title}</span>
-             </div>
+            <div className="w-8 h-10 rounded-sm overflow-hidden shadow-sm shrink-0">
+              <BookCover
+                isbn={activeRead.isbn}
+                title={activeRead.title}
+                author={activeRead.author}
+                moodColor={activeRead.moodColor}
+                showText={false}
+                className="w-full h-full"
+              />
+            </div>
+
+            <div className="flex flex-col">
+              <span className="text-[10px] uppercase text-slate-400 font-bold tracking-wider">Reading Now</span>
+              <span className="text-sm font-serif text-white max-w-[150px] truncate">{activeRead.title}</span>
+            </div>
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="relative group">
-          <input 
+          <input
             ref={inputRef}
-            type="text" 
+            type="text"
             placeholder="Search books..."
             value={searchValue}
             onChange={(e) => onSearchChange(e.target.value)}
             className="bg-black/40 border border-slate-600 rounded-full px-5 py-2.5 w-32 md:w-48 focus:w-64 transition-all duration-300 text-sm text-white focus:outline-none focus:border-accent-gold shadow-inner placeholder-slate-500"
           />
           <button type="submit" className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors">
-             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
           </button>
         </form>
-        
-        <div className="w-10 h-10 rounded-full bg-accent-gold text-black font-serif font-bold text-lg flex items-center justify-center shadow-lg hover:bg-white transition-colors cursor-pointer">
-           A
+
+        <div className="relative">
+          <button
+            onClick={() => setShowProfileMenu(!showProfileMenu)}
+            className="w-10 h-10 rounded-full bg-accent-gold text-black font-serif font-bold text-lg flex items-center justify-center shadow-lg hover:bg-white transition-colors overflow-hidden border-2 border-transparent hover:border-white"
+          >
+            {user?.avatar ? (
+              <img src={user.avatar} alt="Profile" className="w-full h-full object-cover" />
+            ) : (
+              "A"
+            )}
+          </button>
+
+          {showProfileMenu && (
+            <div className="absolute top-14 right-0 w-48 bg-[#0a0a0c] border border-white/10 rounded-xl shadow-2xl py-2 animate-fade-in flex flex-col z-[60]">
+              <div className="px-4 py-3 border-b border-white/5">
+                <div className="text-sm font-bold text-white">{user?.name || 'Guest'}</div>
+                <div className="text-[10px] text-slate-500 truncate">{user?.email}</div>
+              </div>
+              {onSettingsClick && (
+                <button onClick={onSettingsClick} className="w-full text-left px-4 py-3 text-sm text-slate-300 hover:bg-white/5 hover:text-white transition-colors flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                  System Config
+                </button>
+              )}
+              <button onClick={onWishlist} className="w-full text-left px-4 py-3 text-sm text-slate-300 hover:bg-white/5 hover:text-white transition-colors">
+                My Archive
+              </button>
+              <button onClick={logout} className="w-full text-left px-4 py-3 text-sm text-red-400 hover:bg-white/5 hover:text-red-300 transition-colors">
+                Sign Out
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </nav>

@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { Book, EnhancedDetails, UserPreferences } from '../types';
 import { MoodVisualizer } from './MoodVisualizer';
@@ -19,7 +20,6 @@ export const BookDetailModal: React.FC<BookDetailModalProps> = ({ book, onClose,
   const [activeTab, setActiveTab] = useState<'details' | 'chat'>('details');
   const [enhanced, setEnhanced] = useState<EnhancedDetails | null>(null);
   const [loadingEnhanced, setLoadingEnhanced] = useState(false);
-  const [showDeepArchive, setShowDeepArchive] = useState(false);
   const [isFocusMode, setIsFocusMode] = useState(false);
 
   useEffect(() => {
@@ -30,10 +30,6 @@ export const BookDetailModal: React.FC<BookDetailModalProps> = ({ book, onClose,
         .then(setEnhanced)
         .catch(console.error)
         .finally(() => setLoadingEnhanced(false));
-    } else {
-      setEnhanced(null);
-      setShowDeepArchive(false);
-      setIsFocusMode(false);
     }
   }, [book, userPrefs]);
 
@@ -43,156 +39,207 @@ export const BookDetailModal: React.FC<BookDetailModalProps> = ({ book, onClose,
     return <FocusMode book={book} enhanced={enhanced} onExit={() => setIsFocusMode(false)} />;
   }
 
+  // Derived atmosphere color
+  const vibeColor = book.moodColor || '#d4af37';
+
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/95 backdrop-blur-md" onClick={onClose} />
-      <div className="relative bg-[#0a0a0c] w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-xl shadow-2xl border border-white/10 scrollbar-hide text-slate-200">
-        
-        <button onClick={onClose} className="absolute top-4 right-4 z-50 bg-black/50 p-1.5 rounded-full border border-white/10 hover:rotate-90 transition-all text-white">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-        </button>
+    <div className="fixed inset-0 z-[100] overflow-y-auto overflow-x-hidden animate-fade-in bg-black">
+      {/* Dynamic Cinematic Background */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        {/* Base Gradient */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black via-[#0a0a0c] to-black opacity-90 z-10" />
+        {/* Atmospheric Glow */}
+        <div className="absolute top-0 right-0 w-[80vw] h-[80vw] rounded-full blur-[150px] opacity-20 transition-colors duration-1000" style={{ background: vibeColor }} />
 
-        <div className="relative h-[280px] w-full flex items-end p-6 md:p-10">
-            <div className="absolute inset-0 pointer-events-none">
-                <BookCover isbn={book.isbn} title={book.title} author={book.author} moodColor={book.moodColor} className="w-full h-full opacity-20 blur-2xl" showText={false} />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0c] via-[#0a0a0c]/40 to-transparent" />
-            </div>
-
-            <div className="relative z-10 flex items-end gap-6 w-full">
-                <div className="hidden md:block w-32 aspect-[2/3] rounded shadow-xl border border-white/10 overflow-hidden transform translate-y-4">
-                    <BookCover isbn={book.isbn} title={book.title} author={book.author} moodColor={book.moodColor} className="w-full h-full" />
-                </div>
-                <div className="flex-1">
-                    <h2 className="text-3xl md:text-5xl font-serif font-bold text-white mb-1 leading-tight">{book.title}</h2>
-                    <p className="text-lg text-accent-gold/80 font-serif italic">By {book.author}</p>
-                    
-                    <div className="flex flex-wrap items-center gap-4 mt-3 text-[10px] font-mono uppercase tracking-widest text-slate-400">
-                        {book.publishedDate && (
-                          <span className="flex items-center gap-1.5 bg-white/5 px-2 py-1 rounded border border-white/5">
-                            {book.publishedDate.substring(0, 4)}
-                          </span>
-                        )}
-                        {book.pageCount && (
-                           <span className="flex items-center gap-1.5 bg-white/5 px-2 py-1 rounded border border-white/5">
-                             {book.pageCount} pgs
-                           </span>
-                        )}
-                    </div>
-                    
-                    {enhanced && (
-                      <p className="text-xs md:text-sm text-slate-400 font-light mt-4 italic border-l border-accent-gold/40 pl-3 max-w-2xl">
-                        {enhanced.literaryIdentity}
-                      </p>
-                    )}
-                </div>
-            </div>
+        {/* Cover Art Backsplash */}
+        <div className="absolute inset-0 opacity-10 blur-3xl scale-110">
+          <img
+            src={book.coverUrl || `https://covers.openlibrary.org/b/isbn/${book.isbn}-L.jpg`}
+            alt="Atmosphere"
+            className="w-full h-full object-cover"
+          />
         </div>
+      </div>
 
-        <div className="flex border-b border-white/5 px-6 md:px-10 sticky top-0 bg-[#0a0a0c]/90 backdrop-blur-xl z-[40]">
-            <button onClick={() => setActiveTab('details')} className={`py-4 px-6 text-[10px] font-bold uppercase tracking-widest transition-all relative ${activeTab === 'details' ? 'text-white' : 'text-slate-500 hover:text-slate-300'}`}>
-                Curation
-                {activeTab === 'details' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-accent-gold" />}
-            </button>
-            <button onClick={() => setActiveTab('chat')} className={`py-4 px-6 text-[10px] font-bold uppercase tracking-widest transition-all relative ${activeTab === 'chat' ? 'text-white' : 'text-slate-500 hover:text-slate-300'}`}>
-                Echo
-                {activeTab === 'chat' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-accent-gold" />}
-            </button>
-            <div className="flex-1" />
-            <button 
-                disabled={!enhanced}
-                onClick={() => setIsFocusMode(true)}
-                className="py-4 px-6 text-[10px] font-bold uppercase tracking-widest text-accent-gold flex items-center gap-2 hover:bg-white/5 disabled:opacity-30"
+      {/* Content Layer */}
+      <div className="relative z-20 min-h-screen flex flex-col items-center">
+
+        {/* Top Navigation Bar */}
+        <div className="w-full max-w-7xl mx-auto px-6 py-6 flex items-center justify-between sticky top-0 z-50 mix-blend-difference text-white">
+          <button onClick={onClose} className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] hover:text-accent-gold transition-colors group">
+            <div className="w-8 h-8 rounded-full border border-white/20 flex items-center justify-center group-hover:border-accent-gold transition-colors">
+              <svg className="w-3 h-3 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+            </div>
+            <span>Back to Atrium</span>
+          </button>
+
+          <div className="flex items-center gap-6">
+            <button
+              onClick={() => onToggleWishlist(book)}
+              className="text-[10px] font-bold uppercase tracking-[0.2em] hover:text-accent-gold transition-colors"
             >
-                <div className="w-2 h-2 rounded-full bg-accent-gold animate-pulse"></div>
-                Focus Mode
+              {isInWishlist ? '- Remove' : '+ Archive'}
             </button>
+            {enhanced && (
+              <button
+                onClick={() => setIsFocusMode(true)}
+                className="bg-white/10 hover:bg-white/20 backdrop-blur px-6 py-2 rounded-full text-[10px] font-bold uppercase tracking-[0.2em] transition-all flex items-center gap-2 border border-white/10"
+              >
+                <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
+                Focus Mode
+              </button>
+            )}
+          </div>
         </div>
 
-        <div className="p-6 md:p-10">
-          {activeTab === 'details' ? (
-            <div className="space-y-12">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-                <div className="lg:col-span-2 space-y-10">
-                  <section className="space-y-4">
-                     <h3 className="text-[10px] uppercase tracking-[0.3em] font-bold text-slate-500 flex items-center gap-2">
-                        <div className="w-1 h-1 bg-accent-gold"></div>
-                        Atmospheric Profile
-                     </h3>
-                     <p className="text-lg md:text-xl font-serif font-light leading-relaxed text-slate-300">
-                        "{book.description}"
-                     </p>
-                  </section>
+        {/* Main Stage */}
+        <div className="w-full max-w-7xl mx-auto px-6 pt-10 pb-32 grid grid-cols-1 lg:grid-cols-12 gap-16">
 
-                  {enhanced && (
-                    <section className="space-y-6 animate-fade-in">
-                       <h3 className="text-[10px] uppercase tracking-[0.3em] font-bold text-slate-500 flex items-center gap-2">
-                          <div className="w-1 h-1 bg-accent-gold"></div>
-                          The Sensory Atrium
-                       </h3>
-                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                          {[
-                            { icon: '🎵', label: 'Sound', val: enhanced.sensoryPairing.sound },
-                            { icon: '🕯️', label: 'Scent', val: enhanced.sensoryPairing.scent },
-                            { icon: '🍵', label: 'Sip', val: enhanced.sensoryPairing.sip },
-                            { icon: '💡', label: 'Lighting', val: enhanced.sensoryPairing.lighting }
-                          ].map((pair, idx) => (
-                            <div key={idx} className="bg-white/[0.03] border border-white/5 p-4 rounded-xl group hover:border-accent-gold/30 transition-colors">
-                               <div className="text-xl mb-2">{pair.icon}</div>
-                               <div className="text-[9px] uppercase tracking-widest text-slate-500 mb-1">{pair.label}</div>
-                               <div className="text-xs font-medium text-slate-200 line-clamp-2">{pair.val}</div>
-                            </div>
-                          ))}
-                       </div>
-                    </section>
-                  )}
+          {/* Left: Artifact Display */}
+          <div className="lg:col-span-5 flex flex-col gap-10 sticky top-32">
+            <div className="relative aspect-[2/3] w-full max-w-md mx-auto rounded-xl shadow-2xl shadow-black/50 overflow-hidden border border-white/5 group">
+              <BookCover isbn={book.isbn} title={book.title} author={book.author} moodColor={book.moodColor} className="w-full h-full transform group-hover:scale-105 transition-transform duration-700" />
 
-                  <section className="pt-6 border-t border-white/5 flex flex-wrap gap-4">
-                    <button 
-                      onClick={() => onToggleWishlist(book)}
-                      className={`px-8 py-3 rounded-full text-xs font-bold uppercase tracking-widest transition-all ${isInWishlist ? 'bg-accent-gold text-deep-bg' : 'bg-white/10 text-white hover:bg-white/20'}`}
-                    >
-                      {isInWishlist ? 'Remove from Archive' : 'Add to Archive'}
-                    </button>
-                    {book.buyLink && (
-                       <a href={book.buyLink} target="_blank" rel="noopener noreferrer" className="px-8 py-3 rounded-full bg-white text-black text-xs font-bold uppercase tracking-widest hover:bg-accent-gold transition-all">
-                         Acquire Volume
-                       </a>
-                    )}
-                  </section>
-                </div>
+              {/* Shimmer Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/5 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
+            </div>
 
-                <aside className="space-y-8">
-                  {loadingEnhanced ? (
-                    <div className="space-y-4 animate-pulse">
-                      <div className="h-4 w-1/2 bg-white/5 rounded"></div>
-                      <div className="h-20 w-full bg-white/5 rounded"></div>
-                    </div>
-                  ) : enhanced ? (
-                    <div className="bg-white/[0.03] rounded-2xl p-6 border border-white/10 space-y-6">
-                       <h4 className="text-[10px] uppercase tracking-widest font-bold text-accent-gold">Curation Logic</h4>
-                       <div className="space-y-4">
-                          <div className="space-y-1">
-                             <div className="text-[9px] text-slate-500 uppercase tracking-widest">Moment Fit</div>
-                             <div className="text-sm italic font-serif text-slate-300">"{enhanced.sectionJustification}"</div>
-                          </div>
-                          <div className="space-y-1">
-                             <div className="text-[9px] text-slate-500 uppercase tracking-widest">Commitment</div>
-                             <div className="flex gap-2">
-                                <span className="text-[9px] px-2 py-0.5 rounded bg-white/5 border border-white/5">{enhanced.commitment.attention} focus</span>
-                                <span className="text-[9px] px-2 py-0.5 rounded bg-white/5 border border-white/5">{enhanced.commitment.pacing} pace</span>
-                             </div>
-                          </div>
-                       </div>
-                       
-                       <MoodVisualizer initialPrompt={`An atmospheric scene reflecting: ${enhanced.atmosphericProfile.imagery}. Tones of ${book.moodColor}.`} />
-                    </div>
-                  ) : null}
-                </aside>
+            {/* Quick Stats Grid */}
+            <div className="grid grid-cols-3 gap-4 border-t border-white/10 pt-8">
+              <div className="text-center">
+                <div className="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Rating</div>
+                <div className="font-serif text-xl">{book.averageRating || '-'} ★</div>
+              </div>
+              <div className="text-center border-l border-white/10">
+                <div className="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Pages</div>
+                <div className="font-serif text-xl">{book.pageCount || '~'}</div>
+              </div>
+              <div className="text-center border-l border-white/10">
+                <div className="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Year</div>
+                <div className="font-serif text-xl">{book.publishedDate?.substring(0, 4) || '-'}</div>
               </div>
             </div>
-          ) : (
-            <CharacterChat bookTitle={book.title} author={book.author} onClose={() => setActiveTab('details')} />
-          )}
+          </div>
+
+          {/* Right: Narrative Intelligence */}
+          <div className="lg:col-span-7 space-y-16">
+
+            {/* Header */}
+            <div className="space-y-6">
+              <h1 className="text-5xl md:text-7xl font-serif font-bold leading-[0.9] text-transparent bg-clip-text bg-gradient-to-b from-white to-slate-400">
+                {book.title}
+              </h1>
+              <p className="text-xl md:text-2xl font-serif italic text-accent-gold/80">
+                by {book.author}
+              </p>
+            </div>
+
+            {/* Tabs */}
+            <div className="border-b border-white/10 flex gap-8">
+              <button
+                onClick={() => setActiveTab('details')}
+                className={`pb-4 text-[10px] font-bold uppercase tracking-[0.2em] transition-all relative ${activeTab === 'details' ? 'text-white' : 'text-slate-600 hover:text-slate-400'}`}
+              >
+                Deep Dive
+                {activeTab === 'details' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-accent-gold shadow-[0_0_10px_rgba(212,175,55,0.5)]" />}
+              </button>
+              <button
+                onClick={() => setActiveTab('chat')}
+                className={`pb-4 text-[10px] font-bold uppercase tracking-[0.2em] transition-all relative ${activeTab === 'chat' ? 'text-white' : 'text-slate-600 hover:text-slate-400'}`}
+              >
+                Character Resonance
+                {activeTab === 'chat' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-accent-gold shadow-[0_0_10px_rgba(212,175,55,0.5)]" />}
+              </button>
+            </div>
+
+            {activeTab === 'details' ? (
+              <div className="space-y-16 animate-slide-up">
+
+                {/* Synopsis - AVAILABLE IMMEDIATELY */}
+                <div className="space-y-6">
+                  <h3 className="text-[10px] uppercase tracking-[0.2em] text-slate-500 flex items-center gap-4">
+                    <span className="w-8 h-[1px] bg-slate-700"></span>
+                    Synopsis
+                    <span className="w-full h-[1px] bg-slate-700"></span>
+                  </h3>
+                  <div className="prose prose-invert prose-lg max-w-none font-serif text-slate-400 font-light">
+                    {book.description.replace(/(<([^>]+)>)/gi, "")}
+                  </div>
+                </div>
+
+                {/* Enhanced DNA Analysis - LOADING STATE */}
+                {loadingEnhanced ? (
+                  <div className="space-y-8 animate-pulse opacity-50">
+                    <div className="p-8 rounded-2xl bg-white/[0.02] border border-white/5 h-32 relative overflow-hidden">
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-shimmer" />
+                      <div className="text-[9px] uppercase tracking-widest text-slate-500 mb-4">Analysing Literary DNA...</div>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {[1, 2, 3, 4].map(i => (
+                        <div key={i} className="h-24 bg-white/[0.02] rounded-xl border border-white/5" />
+                      ))}
+                    </div>
+                  </div>
+                ) : enhanced ? (
+                  <div className="space-y-16 animate-fade-in">
+                    {/* The Hook */}
+                    <div className="p-8 rounded-2xl bg-white/[0.02] border border-white/5 relative overflow-hidden">
+                      <div className="absolute top-0 left-0 w-1 h-full bg-accent-gold/50" />
+                      <h3 className="text-[9px] uppercase tracking-widest text-slate-500 mb-4">Why This, Why Now</h3>
+                      <p className="font-serif text-lg leading-relaxed text-slate-200">
+                        "{enhanced.literaryIdentity}"
+                      </p>
+                    </div>
+
+                    {/* Sensory Pairing Matrix */}
+                    <div className="space-y-6">
+                      <h3 className="text-[10px] uppercase tracking-[0.2em] text-slate-500 flex items-center gap-4">
+                        <span className="w-8 h-[1px] bg-slate-700"></span>
+                        Sensory Experience
+                        <span className="w-full h-[1px] bg-slate-700"></span>
+                      </h3>
+                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+                        {[
+                          { icon: '🎧', title: 'Start with', val: enhanced.sensoryPairing.sound },
+                          { icon: '🕯️', title: 'Light a', val: enhanced.sensoryPairing.scent },
+                          { icon: '☕', title: 'Prepare', val: enhanced.sensoryPairing.sip },
+                          { icon: '💡', title: 'Scene', val: enhanced.sensoryPairing.lighting },
+                        ].map((item, i) => (
+                          <div key={i} className="group p-6 rounded-xl bg-white/[0.02] border border-white/5 hover:border-accent-gold/20 transition-all hover:-translate-y-1">
+                            <div className="text-2xl mb-3 grayscale group-hover:grayscale-0 transition-all">{item.icon}</div>
+                            <div className="text-[9px] uppercase tracking-widest text-slate-600 mb-1">{item.title}</div>
+                            <div className="text-xs font-bold text-slate-300 group-hover:text-accent-gold transition-colors">{item.val}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Action Footer */}
+                    {book.buyLink && (
+                      <div className="fixed bottom-0 left-0 w-full p-6 bg-gradient-to-t from-black via-black to-transparent z-40 pointer-events-none flex justify-center pb-12">
+                        <a
+                          href={book.buyLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="pointer-events-auto bg-white text-black px-12 py-4 rounded-full font-bold uppercase tracking-[0.2em] hover:scale-105 transition-transform shadow-[0_0_50px_rgba(255,255,255,0.2)] hover:shadow-[0_0_80px_rgba(255,255,255,0.4)]"
+                        >
+                          Acquire This Volume
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="py-10 text-center text-slate-600 font-serif italic">Archive data unavailable.</div>
+                )}
+
+              </div>
+            ) : (
+              <div className="animate-fade-in bg-white/[0.02] border border-white/5 rounded-2xl h-[600px] overflow-hidden">
+                <CharacterChat bookTitle={book.title} author={book.author} onClose={() => { }} />
+              </div>
+            )}
+
+          </div>
         </div>
       </div>
     </div>

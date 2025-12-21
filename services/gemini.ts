@@ -2,7 +2,11 @@
 import { GoogleGenAI, Type, Modality, LiveServerMessage, Chat, GenerateContentResponse } from "@google/genai";
 import { UserPreferences, Book, CharacterPersona, EnhancedDetails, WebSource, TrainingSignal, SessionHistory, AtmosphericIntelligence, PulseUpdate } from "../types";
 
-const getAi = () => new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+const getAi = () => {
+  const key = localStorage.getItem('atmosphera_api_key') || import.meta.env.VITE_GEMINI_API_KEY || '';
+  if (!key) throw new Error("API_KEY_MISSING");
+  return new GoogleGenAI({ apiKey: key });
+};
 const SYSTEM_DATE = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 const aiCache = new Map<string, any>();
 
@@ -24,7 +28,7 @@ export const fetchLiteraryPulse = async (language?: string): Promise<PulseUpdate
   const ai = getAi();
   const lang = language || 'English';
   const prompt = `Identify 4 high-signal literary news updates for today (${SYSTEM_DATE}). Focus on award wins, major releases, or viral literary discussions. Language context: ${lang}. Return as JSON array.`;
-  
+
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
@@ -68,7 +72,7 @@ export const fetchEnhancedBookDetails = async (book: Book, prefs: UserPreference
       contents: prompt,
       config: {
         systemInstruction,
-        tools: [{ googleSearch: {} }], 
+        tools: [{ googleSearch: {} }],
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
@@ -127,29 +131,29 @@ export const searchBooks = async (query: string, language?: string, limit: numbe
   try {
     const langCode = language ? LANGUAGE_MAP[language] || '' : '';
     const langParam = langCode ? `&langRestrict=${langCode}` : '';
-    const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=${limit}&printType=books${langParam}`); 
+    const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=${limit}&printType=books${langParam}`);
     if (!res.ok) throw new Error(`API Error: ${res.status}`);
     const data = await res.json();
     return (data.items || []).map((item: any) => {
-        const info = item.volumeInfo;
-        return {
-            title: info.title,
-            author: info.authors?.join(', ') || 'Unknown',
-            isbn: info.industryIdentifiers?.[0]?.identifier,
-            description: info.description || "No description available.",
-            genre: info.categories?.[0] || 'General',
-            publisher: info.publisher,
-            publishedDate: info.publishedDate,
-            pageCount: info.pageCount,
-            averageRating: info.averageRating,
-            moodColor: '#475569',
-            atmosphericRole: 'Immersive',
-            cognitiveEffort: 'Moderate',
-            excerpt: info.description?.substring(0, 100) || '',
-            coverUrl: info.imageLinks?.thumbnail?.replace('http:', 'https:'),
-            buyLink: info.infoLink?.replace('http:', 'https:'),
-            language: info.language
-        } as Book;
+      const info = item.volumeInfo;
+      return {
+        title: info.title,
+        author: info.authors?.join(', ') || 'Unknown',
+        isbn: info.industryIdentifiers?.[0]?.identifier,
+        description: info.description || "No description available.",
+        genre: info.categories?.[0] || 'General',
+        publisher: info.publisher,
+        publishedDate: info.publishedDate,
+        pageCount: info.pageCount,
+        averageRating: info.averageRating,
+        moodColor: '#475569',
+        atmosphericRole: 'Immersive',
+        cognitiveEffort: 'Moderate',
+        excerpt: info.description?.substring(0, 100) || '',
+        coverUrl: info.imageLinks?.thumbnail?.replace('http:', 'https:'),
+        buyLink: info.infoLink?.replace('http:', 'https:'),
+        language: info.language
+      } as Book;
     });
   } catch (e) {
     console.error("Search Books failed", e);
@@ -162,29 +166,29 @@ export const getTrendingBooks = async (context?: string, language?: string): Pro
     const langCode = language ? LANGUAGE_MAP[language] || '' : '';
     const langParam = langCode ? `&langRestrict=${langCode}` : '';
     const query = context || `subject:fiction ${SYSTEM_DATE}`;
-    const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=30&printType=books&orderBy=relevance${langParam}`); 
+    const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=30&printType=books&orderBy=relevance${langParam}`);
     if (!res.ok) throw new Error("Trending fetch failed");
     const data = await res.json();
     return (data.items || []).map((item: any) => {
-        const info = item.volumeInfo;
-        return {
-            title: info.title,
-            author: info.authors?.join(', ') || 'Unknown',
-            isbn: info.industryIdentifiers?.[0]?.identifier,
-            description: info.description || "",
-            genre: info.categories?.[0] || 'General',
-            publisher: info.publisher,
-            publishedDate: info.publishedDate,
-            pageCount: info.pageCount,
-            averageRating: info.averageRating,
-            moodColor: '#475569',
-            atmosphericRole: 'Immersive',
-            cognitiveEffort: 'Moderate',
-            excerpt: info.description?.substring(0, 100) || '',
-            coverUrl: info.imageLinks?.thumbnail?.replace('http:', 'https:'),
-            buyLink: info.infoLink?.replace('http:', 'https:'),
-            language: info.language
-        } as Book;
+      const info = item.volumeInfo;
+      return {
+        title: info.title,
+        author: info.authors?.join(', ') || 'Unknown',
+        isbn: info.industryIdentifiers?.[0]?.identifier,
+        description: info.description || "",
+        genre: info.categories?.[0] || 'General',
+        publisher: info.publisher,
+        publishedDate: info.publishedDate,
+        pageCount: info.pageCount,
+        averageRating: info.averageRating,
+        moodColor: '#475569',
+        atmosphericRole: 'Immersive',
+        cognitiveEffort: 'Moderate',
+        excerpt: info.description?.substring(0, 100) || '',
+        coverUrl: info.imageLinks?.thumbnail?.replace('http:', 'https:'),
+        buyLink: info.infoLink?.replace('http:', 'https:'),
+        language: info.language
+      } as Book;
     });
   } catch (e) { return []; }
 };
@@ -229,7 +233,7 @@ export const getCharacterPersona = async (title: string, author: string): Promis
     model: "gemini-3-flash-preview",
     contents: `Identify a central character from "${title}" by ${author}. Return JSON: name, greeting, systemInstruction.`,
     config: {
-      tools: [{ googleSearch: {} }], 
+      tools: [{ googleSearch: {} }],
       responseMimeType: "application/json",
       responseSchema: {
         type: Type.OBJECT,
@@ -299,8 +303,8 @@ export const generateAudioPreview = async (t: string): Promise<AudioBuffer> => {
     const frameCount = dataInt16.length / numChannels;
     const buffer = ctx.createBuffer(numChannels, frameCount, sampleRate);
     for (let channel = 0; channel < numChannels; channel++) {
-        const channelData = buffer.getChannelData(channel);
-        for (let i = 0; i < frameCount; i++) channelData[i] = dataInt16[i * numChannels + channel] / 32768.0;
+      const channelData = buffer.getChannelData(channel);
+      for (let i = 0; i < frameCount; i++) channelData[i] = dataInt16[i * numChannels + channel] / 32768.0;
     }
     return buffer;
   }
@@ -309,8 +313,8 @@ export const generateAudioPreview = async (t: string): Promise<AudioBuffer> => {
 
 export const connectToLiveLibrarian = async (onAudio: (buffer: AudioBuffer) => void, onClose: () => void) => {
   const ai = getAi();
-  const inputAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)({sampleRate: 16000});
-  const outputAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)({sampleRate: 24000});
+  const inputAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
+  const outputAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
   const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
   function encode(bytes: Uint8Array) {
     let binary = '';
@@ -361,7 +365,8 @@ export const getAtmosphericIntelligence = async (
   prefs: UserPreferences,
   history: SessionHistory,
   bookPool: Book[],
-  currentShelves: string[]
+  currentShelves: string[],
+  localWeather?: string | null
 ): Promise<AtmosphericIntelligence> => {
   const ai = getAi();
   const poolSummary = bookPool.map(b => `${b.title} by ${b.author}`).join(', ');
@@ -379,8 +384,11 @@ export const getAtmosphericIntelligence = async (
     OUTPUT: Strict JSON with session_mood, ranked_books (title, confidence, reason), suppress, read_later, additionalDiscoveryQuery.
   `;
 
+  // Merge User Preference Weather (Manual) with Local Weather (Sensor)
+  const weatherContext = localWeather ? `Detected Atmosphere: ${localWeather}` : `Prerefence: ${prefs.weather}`;
+
   const prompt = `
-    CONTEXT: ${prefs.weather}, Mood: ${prefs.mood}, Energy: ${prefs.pace}.
+    CONTEXT: ${weatherContext}, Mood: ${prefs.mood}, Energy: ${prefs.pace}.
     HISTORY: Viewed: ${history.viewed.slice(-3).join(', ')}.
     POOL: ${poolSummary}.
     Analyze and adapt.
@@ -400,19 +408,19 @@ export const getAtmosphericIntelligence = async (
             featuredBookTitle: { type: Type.STRING },
             shelfOrder: { type: Type.ARRAY, items: { type: Type.STRING } },
             intent: {
-                type: Type.OBJECT,
-                properties: { primary: { type: Type.STRING }, direction: { type: Type.STRING }, tolerance: { type: Type.STRING } },
-                required: ["primary", "direction", "tolerance"]
+              type: Type.OBJECT,
+              properties: { primary: { type: Type.STRING }, direction: { type: Type.STRING }, tolerance: { type: Type.STRING } },
+              required: ["primary", "direction", "tolerance"]
             },
             antiRecommendation: {
-                type: Type.OBJECT,
-                properties: { title: { type: Type.STRING }, reason: { type: Type.STRING } },
-                required: ["title", "reason"]
+              type: Type.OBJECT,
+              properties: { title: { type: Type.STRING }, reason: { type: Type.STRING } },
+              required: ["title", "reason"]
             },
             readLater: {
-                type: Type.OBJECT,
-                properties: { title: { type: Type.STRING }, optimalMoment: { type: Type.STRING } },
-                required: ["title", "optimalMoment"]
+              type: Type.OBJECT,
+              properties: { title: { type: Type.STRING }, optimalMoment: { type: Type.STRING } },
+              required: ["title", "optimalMoment"]
             },
             reorderedPool: {
               type: Type.ARRAY,
@@ -436,37 +444,45 @@ export const getAtmosphericIntelligence = async (
 };
 
 export const getBookRecommendations = async (prefs: UserPreferences, trainingSignals: TrainingSignal[] = []): Promise<{ heading: string, insight: string, antiRecommendation: string, books: Book[], confidence: string }> => {
-  const ai = getAi();
   const systemInstruction = `You are Atmosphera, a deep-reasoning book recommendation engine. Archive Date: ${SYSTEM_DATE}. Recommend books strictly in ${prefs.language}.`;
   const prompt = `Curate 5 books for ${prefs.mood}, ${prefs.weather}, language ${prefs.language}. Interest: ${prefs.specificInterest}.`;
+
   try {
-    const response: GenerateContentResponse = await ai.models.generateContent({
-      model: "gemini-3-pro-preview",
-      contents: prompt,
-      config: {
-        systemInstruction,
-        tools: [{ googleSearch: {} }],
-        thinkingConfig: { thinkingBudget: 32768 }, 
-        responseMimeType: "application/json",
-        responseSchema: {
+    // SECURE: Call Backend Proxy instead of exposing key
+    const res = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: "gemini-2.0-flash", // Using flash for speed via proxy
+        contents: [{ parts: [{ text: prompt }] }],
+        config: {
+          systemInstruction: { parts: [{ text: systemInstruction }] },
+          tools: [{ googleSearch: {} }],
+          responseMimeType: "application/json",
+          responseSchema: {
             type: Type.OBJECT,
             properties: {
-                heading: { type: Type.STRING },
-                insight: { type: Type.STRING },
-                antiRecommendation: { type: Type.STRING },
-                confidence: { type: Type.STRING, enum: ["High", "Medium", "Experimental"] },
-                books: { 
-                  type: Type.ARRAY, items: {
-                    type: Type.OBJECT,
-                    properties: { title: { type: Type.STRING }, author: { type: Type.STRING }, isbn: { type: Type.STRING }, genre: { type: Type.STRING }, description: { type: Type.STRING }, reasoning: { type: Type.STRING }, atmosphericRole: { type: Type.STRING }, cognitiveEffort: { type: Type.STRING, enum: ["Light", "Moderate", "Demanding"] }, moodColor: { type: Type.STRING }, excerpt: { type: Type.STRING }, language: { type: Type.STRING } },
-                    required: ["title", "author", "reasoning", "moodColor", "genre", "description", "excerpt", "atmosphericRole", "cognitiveEffort", "language"]
-                  }
+              heading: { type: Type.STRING },
+              insight: { type: Type.STRING },
+              antiRecommendation: { type: Type.STRING },
+              confidence: { type: Type.STRING, enum: ["High", "Medium", "Experimental"] },
+              books: {
+                type: Type.ARRAY, items: {
+                  type: Type.OBJECT,
+                  properties: { title: { type: Type.STRING }, author: { type: Type.STRING }, isbn: { type: Type.STRING }, genre: { type: Type.STRING }, description: { type: Type.STRING }, reasoning: { type: Type.STRING }, atmosphericRole: { type: Type.STRING }, cognitiveEffort: { type: Type.STRING, enum: ["Light", "Moderate", "Demanding"] }, moodColor: { type: Type.STRING }, excerpt: { type: Type.STRING }, language: { type: Type.STRING } },
+                  required: ["title", "author", "reasoning", "moodColor", "genre", "description", "excerpt", "atmosphericRole", "cognitiveEffort", "language"]
                 }
+              }
             },
             required: ["heading", "insight", "antiRecommendation", "confidence", "books"]
-        },
-      }
+          }
+        }
+      })
     });
-    return extractJson(response.text);
+
+    if (!res.ok) throw new Error("Secure Generation Failed");
+    const response: GenerateContentResponse = await res.json();
+    return extractJson(response.candidates?.[0]?.content?.parts?.[0]?.text || "{}");
+
   } catch (error) { throw error; }
 };
