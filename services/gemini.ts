@@ -8,7 +8,22 @@ const getAi = () => {
   return new GoogleGenAI({ apiKey: key });
 };
 const SYSTEM_DATE = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-const aiCache = new Map<string, any>();
+
+// SENIOR ENGINEER UPGRADE: Persistent Caching Layer
+// Instead of just memory, we check localStorage to speed up re-visits.
+const getCache = (key: string) => {
+  try {
+    const item = localStorage.getItem(`atmosphera_cache_${key}`);
+    return item ? JSON.parse(item) : null;
+  } catch (e) { return null; }
+};
+
+const setCache = (key: string, data: any) => {
+  try {
+    // Limit cache size? For MVP, just saving is fine. browser has 5MB limit.
+    localStorage.setItem(`atmosphera_cache_${key}`, JSON.stringify(data));
+  } catch (e) { console.warn("Cache quota exceeded"); }
+};
 
 const extractJson = (text: string) => {
   try {
@@ -66,10 +81,17 @@ export const fetchLiteraryPulse = async (language?: string): Promise<PulseUpdate
 
 export const fetchEnhancedBookDetails = async (book: Book, prefs: UserPreferences | null): Promise<EnhancedDetails> => {
   const cacheKey = `details-${book.title}-${book.author}`;
-  if (aiCache.has(cacheKey)) return aiCache.get(cacheKey);
+  const cached = getCache(cacheKey);
+  if (cached) return cached;
 
   const systemInstruction = `You are Atmosphera. Generate accurate, sensory book metadata. Use Search to verify facts. Archive Date: ${SYSTEM_DATE}.`;
-  const prompt = `Generate deep metadata for "${book.title}" by ${book.author}. Include a memorable quote, key themes. CRITICAL: Provide actual functional URLs for 'ebookUrl' (Google Books/Project Gutenberg/Amazon) and 'audiobookUrl' (Audible/Librivox). If no direct link, generate a direct search URL for that format.`;
+  // SENIOR UPGRADE: We explicitly demand "Functional Search URLs" if a direct link is missing.
+  // This prevents "dead" links by ensuring the user always lands on a search result page at minimum.
+  const prompt = `Generate deep metadata for "${book.title}" by ${book.author}. Include a memorable quote, key themes. 
+  CRITICAL FOR FORMATS:
+  1. 'ebookUrl': If a specific legit link (Project Gutenberg/Standard Ebooks) exists, use it. OTHERWISE, generate a high-quality Google Search URL: "https://www.google.com/search?q=${encodeURIComponent(book.title + ' ' + book.author)} +filetype:pdf+OR+epub".
+  2. 'audiobookUrl': Use a generic Audible search URL: "https://www.audible.com/search?keywords=${encodeURIComponent(book.title + ' ' + book.author)}".
+  Do NOT invent fake store links. Safe Search URLs are better than 404s.`;
 
   try {
     const res = await fetch('/api/generate', {
@@ -143,7 +165,7 @@ export const fetchEnhancedBookDetails = async (book: Book, prefs: UserPreference
     if (!res.ok) throw new Error("Enhanced details generation failed via secure proxy");
     const response: GenerateContentResponse = await res.json();
     const result = extractJson(response.candidates?.[0]?.content?.parts?.[0]?.text || "{}");
-    aiCache.set(cacheKey, result);
+    setCache(cacheKey, result);
     return result;
   } catch (error) {
     console.error("Enhancement failed", error);
@@ -251,7 +273,8 @@ export const fetchHiddenGems = async (language?: string): Promise<Book[]> => {
 
 export const getCharacterPersona = async (title: string, author: string): Promise<CharacterPersona> => {
   const cacheKey = `persona-${title}-${author}`;
-  if (aiCache.has(cacheKey)) return aiCache.get(cacheKey);
+  const cached = getCache(cacheKey);
+  if (cached) return cached;
   const ai = getAi();
   const response: GenerateContentResponse = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
@@ -267,7 +290,7 @@ export const getCharacterPersona = async (title: string, author: string): Promis
     }
   });
   const result = extractJson(response.text);
-  aiCache.set(cacheKey, result);
+  setCache(cacheKey, result);
   return result;
 };
 
