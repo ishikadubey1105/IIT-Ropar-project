@@ -468,8 +468,8 @@ export const getAtmosphericIntelligence = async (
 };
 
 export const getBookRecommendations = async (prefs: UserPreferences, trainingSignals: TrainingSignal[] = []): Promise<{ heading: string, insight: string, antiRecommendation: string, books: Book[], confidence: string }> => {
-  const systemInstruction = `You are Atmosphera, a deep-reasoning book recommendation engine. Archive Date: ${SYSTEM_DATE}. Recommend books strictly in ${prefs.language}.`;
-  const prompt = `Curate 5 books for ${prefs.mood}, ${prefs.weather}, language ${prefs.language}. Interest: ${prefs.specificInterest}.`;
+  const systemInstruction = `You are Atmosphera, a deep-reasoning book recommendation engine. Archive Date: ${SYSTEM_DATE}. Recommend books strictly for the Age Group: ${prefs.age} and Language: ${prefs.language}. CRITICAL: Do NOT recommend children's/YA books if age is 18+.`;
+  const prompt = `Curate 5 books for Age: ${prefs.age}, Mood: ${prefs.mood}, Weather: ${prefs.weather}, Language: ${prefs.language}. Interest: ${prefs.specificInterest}. Ensure maturity level matches age ${prefs.age}.`;
 
   try {
     // SECURE: Call Backend Proxy instead of exposing key
