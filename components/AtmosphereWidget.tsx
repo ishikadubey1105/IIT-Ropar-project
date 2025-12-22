@@ -19,8 +19,21 @@ export const AtmosphereWidget: React.FC = () => {
         [WeatherType.WINDY]: "💨",
     };
 
-    const icon = weather ? weatherIcons[weather] || "✨" : "✨";
-    const label = weather || "Calibrating...";
+    const [isOnline, setIsOnline] = React.useState(navigator.onLine);
+
+    React.useEffect(() => {
+        const handleOnline = () => setIsOnline(true);
+        const handleOffline = () => setIsOnline(false);
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
+        return () => {
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', handleOffline);
+        };
+    }, []);
+
+    const icon = !isOnline ? "📡" : (weather ? weatherIcons[weather] || "✨" : "✨");
+    const label = !isOnline ? "Offline Mode (Cached)" : (weather || "Calibrating...");
 
     return (
         <div className="fixed top-24 right-6 z-50 animate-fade-in pointer-events-none">

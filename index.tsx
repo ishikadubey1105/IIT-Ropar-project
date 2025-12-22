@@ -8,12 +8,15 @@ if (!rootElement) {
 }
 
 import { AtmosphereProvider } from './contexts/AtmosphereProvider';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
-    <AtmosphereProvider>
-      <App />
-    </AtmosphereProvider>
+    <ErrorBoundary>
+      <AtmosphereProvider>
+        <App />
+      </AtmosphereProvider>
+    </ErrorBoundary>
   </React.StrictMode>
 );
