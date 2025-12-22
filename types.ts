@@ -97,8 +97,8 @@ export interface EnhancedDetails {
   memorableQuote: string;
   keyThemes: string[];
   formats: {
-    ebook: boolean;
-    audiobook: boolean;
+    ebookUrl: string;
+    audiobookUrl: string;
     graphicNovel?: boolean;
   };
 }

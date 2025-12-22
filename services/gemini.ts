@@ -69,7 +69,7 @@ export const fetchEnhancedBookDetails = async (book: Book, prefs: UserPreference
   if (aiCache.has(cacheKey)) return aiCache.get(cacheKey);
 
   const systemInstruction = `You are Atmosphera. Generate accurate, sensory book metadata. Use Search to verify facts. Archive Date: ${SYSTEM_DATE}.`;
-  const prompt = `Generate deep metadata for "${book.title}" by ${book.author}. Include a memorable quote, key themes, and likely format availability (ebook/audiobook). Current mood context: ${prefs?.mood || 'Neutral'}.`;
+  const prompt = `Generate deep metadata for "${book.title}" by ${book.author}. Include a memorable quote, key themes. CRITICAL: Provide actual functional URLs for 'ebookUrl' (Google Books/Project Gutenberg/Amazon) and 'audiobookUrl' (Audible/Librivox). If no direct link, generate a direct search URL for that format.`;
 
   try {
     const res = await fetch('/api/generate', {
@@ -127,11 +127,11 @@ export const fetchEnhancedBookDetails = async (book: Book, prefs: UserPreference
               formats: {
                 type: Type.OBJECT,
                 properties: {
-                  ebook: { type: Type.BOOLEAN },
-                  audiobook: { type: Type.BOOLEAN },
+                  ebookUrl: { type: Type.STRING },
+                  audiobookUrl: { type: Type.STRING },
                   graphicNovel: { type: Type.BOOLEAN }
                 },
-                required: ["ebook", "audiobook"]
+                required: ["ebookUrl", "audiobookUrl"]
               }
             },
             required: ["literaryIdentity", "whyFitsNow", "commitment", "emotionalArc", "readWhen", "avoidWhen", "microSynopsis", "atmosphericProfile", "readDifferentlyInsight", "sectionJustification", "deepArchive", "sensoryPairing", "memorableQuote", "keyThemes", "formats"]

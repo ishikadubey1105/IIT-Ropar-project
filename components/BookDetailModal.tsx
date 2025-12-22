@@ -192,17 +192,17 @@ export const BookDetailModal: React.FC<BookDetailModalProps> = ({ book, onClose,
 
                       {/* Formats & Themes */}
                       <div className="flex flex-wrap gap-3 items-center border-t border-white/5 pt-4">
-                        {enhanced.formats?.ebook && (
-                          <span className="px-2 py-1 rounded bg-slate-800/50 text-[10px] uppercase font-bold text-slate-400 border border-white/5 flex items-center gap-1">
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
-                            E-Book
-                          </span>
+                        {enhanced.formats?.ebookUrl && (
+                          <a href={enhanced.formats.ebookUrl} target="_blank" rel="noopener noreferrer" className="px-3 py-1.5 rounded bg-slate-800/50 hover:bg-slate-700 text-[10px] uppercase font-bold text-slate-400 hover:text-white border border-white/5 hover:border-accent-gold/50 flex items-center gap-2 transition-all group">
+                            <svg className="w-3 h-3 group-hover:text-accent-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+                            Read E-Book
+                          </a>
                         )}
-                        {enhanced.formats?.audiobook && (
-                          <span className="px-2 py-1 rounded bg-slate-800/50 text-[10px] uppercase font-bold text-slate-400 border border-white/5 flex items-center gap-1">
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
-                            Audio
-                          </span>
+                        {enhanced.formats?.audiobookUrl && (
+                          <a href={enhanced.formats.audiobookUrl} target="_blank" rel="noopener noreferrer" className="px-3 py-1.5 rounded bg-slate-800/50 hover:bg-slate-700 text-[10px] uppercase font-bold text-slate-400 hover:text-white border border-white/5 hover:border-accent-gold/50 flex items-center gap-2 transition-all group">
+                            <svg className="w-3 h-3 group-hover:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
+                            Listen Audio
+                          </a>
                         )}
                         <div className="flex-1" />
                         {enhanced.keyThemes?.map(theme => (
