@@ -442,48 +442,55 @@ export const getAtmosphericIntelligence = async (
   `;
 
   try {
-    const response: GenerateContentResponse = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: prompt,
-      config: {
-        systemInstruction,
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            sessionNarration: { type: Type.STRING },
-            featuredBookTitle: { type: Type.STRING },
-            shelfOrder: { type: Type.ARRAY, items: { type: Type.STRING } },
-            intent: {
-              type: Type.OBJECT,
-              properties: { primary: { type: Type.STRING }, direction: { type: Type.STRING }, tolerance: { type: Type.STRING } },
-              required: ["primary", "direction", "tolerance"]
-            },
-            antiRecommendation: {
-              type: Type.OBJECT,
-              properties: { title: { type: Type.STRING }, reason: { type: Type.STRING } },
-              required: ["title", "reason"]
-            },
-            readLater: {
-              type: Type.OBJECT,
-              properties: { title: { type: Type.STRING }, optimalMoment: { type: Type.STRING } },
-              required: ["title", "optimalMoment"]
-            },
-            reorderedPool: {
-              type: Type.ARRAY,
-              items: {
+    const res = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: "gemini-2.0-flash", // Use 2.0 via proxy for stability
+        contents: [{ parts: [{ text: prompt }] }],
+        config: {
+          systemInstruction: { parts: [{ text: systemInstruction }] },
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              sessionNarration: { type: Type.STRING },
+              featuredBookTitle: { type: Type.STRING },
+              shelfOrder: { type: Type.ARRAY, items: { type: Type.STRING } },
+              intent: {
                 type: Type.OBJECT,
-                properties: { title: { type: Type.STRING }, rankingReason: { type: Type.STRING }, confidence: { type: Type.STRING, enum: ["High", "Medium", "Exploratory"] } },
-                required: ["title", "rankingReason", "confidence"]
-              }
+                properties: { primary: { type: Type.STRING }, direction: { type: Type.STRING }, tolerance: { type: Type.STRING } },
+                required: ["primary", "direction", "tolerance"]
+              },
+              antiRecommendation: {
+                type: Type.OBJECT,
+                properties: { title: { type: Type.STRING }, reason: { type: Type.STRING } },
+                required: ["title", "reason"]
+              },
+              readLater: {
+                type: Type.OBJECT,
+                properties: { title: { type: Type.STRING }, optimalMoment: { type: Type.STRING } },
+                required: ["title", "optimalMoment"]
+              },
+              reorderedPool: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: { title: { type: Type.STRING }, rankingReason: { type: Type.STRING }, confidence: { type: Type.STRING, enum: ["High", "Medium", "Exploratory"] } },
+                  required: ["title", "rankingReason", "confidence"]
+                }
+              },
+              additionalDiscoveryQuery: { type: Type.STRING }
             },
-            additionalDiscoveryQuery: { type: Type.STRING }
-          },
-          required: ["sessionNarration", "featuredBookTitle", "shelfOrder", "intent", "antiRecommendation", "readLater", "reorderedPool"]
+            required: ["sessionNarration", "featuredBookTitle", "shelfOrder", "intent", "antiRecommendation", "readLater", "reorderedPool"]
+          }
         }
-      }
+      })
     });
-    return extractJson(response.text);
+
+    if (!res.ok) throw new Error("Intelligence generation failed via proxy");
+    const response: GenerateContentResponse = await res.json();
+    return extractJson(response.candidates?.[0]?.content?.parts?.[0]?.text || "{}");
   } catch (error) {
     console.error("Intelligence failed", error);
     throw error;
