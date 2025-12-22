@@ -16,43 +16,45 @@ import { AuthModal } from './components/AuthModal';
 import { SettingsModal } from './components/SettingsModal';
 import { VisualSearch } from './components/VisualSearch';
 import { useAtmosphere } from './contexts/AtmosphereProvider';
-import { getBookRecommendations, getTrendingBooks, fetchWebTrendingBooks, fetchHiddenGems, getAtmosphericIntelligence, searchBooks, fetchLiteraryPulse } from './services/gemini';
+import { useLibrary } from './hooks/useLibrary';
+import { UserPreferences, Book, SessionHistory } from './types';
 import { getWishlist, toggleWishlist, isInWishlist, getTrainingSignals } from './services/storage';
-import { UserPreferences, Book, SessionHistory, AtmosphericIntelligence, PulseUpdate } from './types';
+import { getBookRecommendations, searchBooks } from './services/gemini';
 
 function App() {
-  const [view, setView] = useState<'home' | 'curate' | 'search' | 'genres' | 'recommendations' | 'lab'>('home');
-  const [selectedBook, setSelectedBook] = useState<Book | null>(null);
+  // Session State
   const [currentPrefs, setCurrentPrefs] = useState<UserPreferences | null>(null);
-
-  // Intelligence State
-  const [intelligence, setIntelligence] = useState<AtmosphericIntelligence | null>(null);
   const [sessionHistory, setSessionHistory] = useState<SessionHistory>({
-    viewed: [],
-    skipped: [],
-    engaged: [],
-    wishlistActions: [],
-    searchQueries: []
+    viewed: [], skipped: [], engaged: [], wishlistActions: [], searchQueries: []
   });
   const interactionCountRef = useRef(0);
-  const isUpdatingIntel = useRef(false);
 
-  // Data State
-  const [featuredBook, setFeaturedBook] = useState<Book | null>(null);
-  const [shelves, setShelves] = useState<{ title: string, books: Book[], isLive?: boolean }[]>([]);
-  const [wishlist, setWishlist] = useState<Book[]>([]);
-  const [recommendations, setRecommendations] = useState<Book[]>([]);
-  const [searchResults, setSearchResults] = useState<Book[]>([]);
-  const [pulses, setPulses] = useState<PulseUpdate[]>([]);
+  // Refactored Hook Usage
+  const { shelves, featuredBook, recommendations, setRecommendations, pulses, loading: libLoading, error: libError, intelligence } = useLibrary(currentPrefs, sessionHistory);
 
   // UI State
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [view, setView] = useState<'home' | 'curate' | 'search' | 'genres' | 'recommendations' | 'lab'>('home');
+  const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const [searchInputValue, setSearchInputValue] = useState("");
+  const [searchResults, setSearchResults] = useState<Book[]>([]);
+  const [loading, setLoading] = useState(false); // Local loading for search/actions
+  const [error, setError] = useState<string | null>(null);
+
+  // Recommendations UI
   const [recTitle, setRecTitle] = useState("Curated for You");
   const [recInsight, setRecInsight] = useState("");
 
-  // COMPUTE ADAPTED SHELVES
+  // Wishlist State
+  const [wishlist, setWishlist] = useState<Book[]>([]);
+  useEffect(() => {
+    setWishlist(getWishlist());
+    const handleUpd = () => setWishlist(getWishlist());
+    window.addEventListener('wishlist-updated', handleUpd);
+    return () => window.removeEventListener('wishlist-updated', handleUpd);
+  }, []);
+
+  // Compute Adapted Shelves (Memoized for Performance)
+  // This logic adapts shelf ordering based on AI intelligence
   const adaptedShelves = useMemo(() => {
     let base = shelves;
     if (intelligence?.shelfOrder) {
@@ -64,161 +66,8 @@ function App() {
         return aIdx - bIdx;
       });
     }
-
-    const seen = new Set<string>();
-    const markSeen = (b: Book) => seen.add(`${b.title}-${b.author}`.toLowerCase());
-    recommendations.forEach(markSeen);
-    wishlist.forEach(markSeen);
-    if (featuredBook) markSeen(featuredBook);
-
-    return base.map(shelf => {
-      let books = shelf.books.filter(book => {
-        const key = `${book.title}-${book.author}`.toLowerCase();
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      });
-
-      if (intelligence?.reorderedPool) {
-        books = books.map(b => {
-          const intel = intelligence.reorderedPool.find(ip => b.title.toLowerCase().includes(ip.title.toLowerCase()));
-          if (intel) return { ...b, reasoning: intel.rankingReason };
-          return b;
-        });
-      }
-      return { ...shelf, books };
-    }).filter(shelf => shelf.books.length > 0);
-  }, [shelves, recommendations, wishlist, featuredBook, intelligence]);
-
-  useEffect(() => {
-    setWishlist(getWishlist());
-    const initializeLibrary = async () => {
-      setLoading(true);
-
-      // Dynamic Categories with more specific, non-overlapping queries
-      const dynamicCategories = [
-        { name: "Trending Now", query: "subject:fiction best_sellers 2025" },
-        { name: "Atmospheric Reads", query: "subject:fiction moody atmospheric literary" },
-        { name: "Dark Academia", query: "subject:fiction dark academia mystery secret history" },
-        { name: "Cyberpunk & Sci-Fi", query: "subject:fiction cyberpunk sci-fi futurism dystopia" },
-        { name: "Cozy Cottagecore", query: "subject:fiction cottagecore cozy romance nature" },
-        { name: "Psychological Thrillers", query: "subject:fiction thriller psychological suspense twist" }
-      ];
-
-      try {
-        const lang = currentPrefs?.language || 'English';
-
-        // Parallel fetching
-        const pulsePromise = fetchLiteraryPulse(lang).catch(() => []);
-        const trendingPromise = fetchWebTrendingBooks(lang).catch(() => []);
-        const gemsPromise = fetchHiddenGems(lang).catch(() => []);
-
-        // Fetch shelves
-        const shelvesPromises = dynamicCategories.map(async (cat) => {
-          // Add random jitter to queries to prevent caching identical results
-          const jitter = Math.random() > 0.5 ? 'novel' : 'book';
-          const books = await getTrendingBooks(`${cat.query} ${jitter}`, lang);
-          return { title: cat.name, books };
-        });
-
-        const [loadedShelves, trending, gems, pulseData] = await Promise.all([
-          Promise.all(shelvesPromises),
-          trendingPromise,
-          gemsPromise,
-          pulsePromise
-        ]);
-
-        // --- GLOBAL DEDUPLICATION & CURATION ENGINE ---
-        const seenIds = new Set<string>();
-        const validShelves: { title: string; books: Book[], isLive?: boolean }[] = [];
-
-        // Helper to filter unique books
-        const getUnique = (books: Book[], limit = 10) => {
-          return books.filter(b => {
-            const id = b.isbn || b.title;
-            if (seenIds.has(id)) return false;
-            seenIds.add(id);
-            return true;
-          }).slice(0, limit);
-        };
-
-        // 1. Establish the "Hero" pool (Top 5 trending + Top 5 gems)
-        const heroPool = [...trending.slice(0, 5), ...gems.slice(0, 5)];
-        // Randomly select one Hero from the pool
-        const hero = heroPool[Math.floor(Math.random() * heroPool.length)] || trending[0];
-
-        if (hero) {
-          seenIds.add(hero.isbn || hero.title);
-          setFeaturedBook(hero);
-        }
-
-        // 2. Build Shelves with remaining unique books
-        if (trending.length) {
-          const uniqueTrending = getUnique(trending);
-          if (uniqueTrending.length) validShelves.push({ title: "Global Sensations", books: uniqueTrending, isLive: true });
-        }
-
-        if (gems.length) {
-          const uniqueGems = getUnique(gems);
-          if (uniqueGems.length) validShelves.push({ title: "Hidden Gems", books: uniqueGems, isLive: true });
-        }
-
-        loadedShelves.forEach(shelf => {
-          const uniqueBooks = getUnique(shelf.books);
-          if (uniqueBooks.length >= 4) { // Only show shelf if it has enough unique content
-            validShelves.push(shelf);
-          }
-        });
-
-        setPulses(pulseData);
-        setShelves(validShelves);
-
-      } catch (err) {
-        setError("Synchronization intermittent.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    initializeLibrary();
-    const handleWishlistUpdate = () => setWishlist(getWishlist());
-    window.addEventListener('wishlist-updated', handleWishlistUpdate);
-    return () => window.removeEventListener('wishlist-updated', handleWishlistUpdate);
-  }, [currentPrefs?.language]);
-
-
-  const { weather: localWeather } = useAtmosphere();
-
-  useEffect(() => {
-    if (!currentPrefs || interactionCountRef.current < 2 || isUpdatingIntel.current) return;
-
-    const triggerIntelligence = async () => {
-      isUpdatingIntel.current = true;
-      try {
-        const allBooksInShelves = shelves.flatMap(s => s.books);
-        const pool = [...recommendations, ...allBooksInShelves].slice(0, 30);
-        const intel = await getAtmosphericIntelligence(currentPrefs, sessionHistory, pool, shelves.map(s => s.title), localWeather);
-        setIntelligence(intel);
-
-        // DYNAMIC LIBRARY EXPANSION: Add new books if requested
-        if (intel.additionalDiscoveryQuery) {
-          const lang = currentPrefs?.language || 'English';
-          const newBooks = await searchBooks(intel.additionalDiscoveryQuery, lang);
-          if (newBooks.length > 0) {
-            setShelves(prev => [
-              { title: `Discovery: ${intel.additionalDiscoveryQuery}`, books: newBooks, isLive: true },
-              ...prev
-            ]);
-          }
-        }
-
-        const newFeatured = pool.find(b => b.title === intel.featuredBookTitle);
-        if (newFeatured) setFeaturedBook(newFeatured);
-        interactionCountRef.current = 0;
-      } catch (e) { console.debug(e); } finally { isUpdatingIntel.current = false; }
-    };
-    triggerIntelligence();
-  }, [sessionHistory, currentPrefs, shelves, recommendations]);
+    return base;
+  }, [shelves, intelligence]);
 
   const trackAction = (type: keyof SessionHistory, val: string) => {
     setSessionHistory(prev => ({
