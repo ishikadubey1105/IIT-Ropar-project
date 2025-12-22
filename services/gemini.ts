@@ -25,33 +25,39 @@ const LANGUAGE_MAP: Record<string, string> = {
 };
 
 export const fetchLiteraryPulse = async (language?: string): Promise<PulseUpdate[]> => {
-  const ai = getAi();
   const lang = language || 'English';
   const prompt = `Identify 4 high-signal literary news updates for today (${SYSTEM_DATE}). Focus on award wins, major releases, or viral literary discussions. Language context: ${lang}. Return as JSON array.`;
 
   try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: prompt,
-      config: {
-        tools: [{ googleSearch: {} }],
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.ARRAY,
-          items: {
-            type: Type.OBJECT,
-            properties: {
-              title: { type: Type.STRING },
-              snippet: { type: Type.STRING },
-              url: { type: Type.STRING },
-              type: { type: Type.STRING, enum: ["Release", "Award", "Viral", "Event"] }
-            },
-            required: ["title", "snippet", "url", "type"]
+    const res = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: "gemini-2.0-flash",
+        contents: [{ parts: [{ text: prompt }] }],
+        config: {
+          tools: [{ googleSearch: {} }],
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                title: { type: Type.STRING },
+                snippet: { type: Type.STRING },
+                url: { type: Type.STRING },
+                type: { type: Type.STRING, enum: ["Release", "Award", "Viral", "Event"] }
+              },
+              required: ["title", "snippet", "url", "type"]
+            }
           }
         }
-      }
+      })
     });
-    return extractJson(response.text);
+
+    if (!res.ok) throw new Error("Pulse fetch failed via proxy");
+    const response: GenerateContentResponse = await res.json();
+    return extractJson(response.candidates?.[0]?.content?.parts?.[0]?.text || "[]");
   } catch (error) {
     console.error("Pulse fetch failed", error);
     return [];
