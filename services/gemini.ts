@@ -62,67 +62,85 @@ export const fetchEnhancedBookDetails = async (book: Book, prefs: UserPreference
   const cacheKey = `details-${book.title}-${book.author}`;
   if (aiCache.has(cacheKey)) return aiCache.get(cacheKey);
 
-  const ai = getAi();
   const systemInstruction = `You are Atmosphera. Generate accurate, sensory book metadata. Use Search to verify facts. Archive Date: ${SYSTEM_DATE}.`;
-  const prompt = `Generate deep metadata for "${book.title}" by ${book.author}. Include a specific sensory pairing (sound, scent, sip, lighting). Current mood context: ${prefs?.mood || 'Neutral'}.`;
+  const prompt = `Generate deep metadata for "${book.title}" by ${book.author}. Include a memorable quote, key themes, and likely format availability (ebook/audiobook). Current mood context: ${prefs?.mood || 'Neutral'}.`;
 
   try {
-    const response: GenerateContentResponse = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: prompt,
-      config: {
-        systemInstruction,
-        tools: [{ googleSearch: {} }],
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            literaryIdentity: { type: Type.STRING },
-            whyFitsNow: { type: Type.ARRAY, items: { type: Type.STRING } },
-            commitment: {
-              type: Type.OBJECT,
-              properties: {
-                attention: { type: Type.STRING, enum: ['low', 'moderate', 'high'] },
-                weight: { type: Type.STRING, enum: ['light', 'moderate', 'heavy'] },
-                pacing: { type: Type.STRING, enum: ['slow', 'steady', 'fast'] }
+    const res = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: "gemini-2.0-flash",
+        contents: [{ parts: [{ text: prompt }] }],
+        config: {
+          systemInstruction: { parts: [{ text: systemInstruction }] },
+          tools: [{ googleSearch: {} }],
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              literaryIdentity: { type: Type.STRING },
+              whyFitsNow: { type: Type.ARRAY, items: { type: Type.STRING } },
+              commitment: {
+                type: Type.OBJECT,
+                properties: {
+                  attention: { type: Type.STRING, enum: ['low', 'moderate', 'high'] },
+                  weight: { type: Type.STRING, enum: ['light', 'moderate', 'heavy'] },
+                  pacing: { type: Type.STRING, enum: ['slow', 'steady', 'fast'] }
+                },
+                required: ["attention", "weight", "pacing"]
               },
-              required: ["attention", "weight", "pacing"]
-            },
-            emotionalArc: { type: Type.STRING },
-            readWhen: { type: Type.ARRAY, items: { type: Type.STRING } },
-            avoidWhen: { type: Type.ARRAY, items: { type: Type.STRING } },
-            microSynopsis: { type: Type.STRING },
-            atmosphericProfile: {
-              type: Type.OBJECT,
-              properties: { tone: { type: Type.STRING }, imagery: { type: Type.STRING }, bestTime: { type: Type.STRING } },
-              required: ["tone", "imagery", "bestTime"]
-            },
-            sensoryPairing: {
-              type: Type.OBJECT,
-              properties: {
-                sound: { type: Type.STRING },
-                scent: { type: Type.STRING },
-                sip: { type: Type.STRING },
-                lighting: { type: Type.STRING }
+              emotionalArc: { type: Type.STRING },
+              readWhen: { type: Type.ARRAY, items: { type: Type.STRING } },
+              avoidWhen: { type: Type.ARRAY, items: { type: Type.STRING } },
+              microSynopsis: { type: Type.STRING },
+              atmosphericProfile: {
+                type: Type.OBJECT,
+                properties: { tone: { type: Type.STRING }, imagery: { type: Type.STRING }, bestTime: { type: Type.STRING } },
+                required: ["tone", "imagery", "bestTime"]
               },
-              required: ["sound", "scent", "sip", "lighting"]
+              sensoryPairing: {
+                type: Type.OBJECT,
+                properties: {
+                  sound: { type: Type.STRING },
+                  scent: { type: Type.STRING },
+                  sip: { type: Type.STRING },
+                  lighting: { type: Type.STRING }
+                },
+                required: ["sound", "scent", "sip", "lighting"]
+              },
+              readDifferentlyInsight: { type: Type.STRING },
+              sectionJustification: { type: Type.STRING },
+              deepArchive: {
+                type: Type.OBJECT,
+                properties: { fullSynopsis: { type: Type.STRING }, authorBackground: { type: Type.STRING } },
+                required: ["fullSynopsis", "authorBackground"]
+              },
+              memorableQuote: { type: Type.STRING },
+              keyThemes: { type: Type.ARRAY, items: { type: Type.STRING } },
+              formats: {
+                type: Type.OBJECT,
+                properties: {
+                  ebook: { type: Type.BOOLEAN },
+                  audiobook: { type: Type.BOOLEAN },
+                  graphicNovel: { type: Type.BOOLEAN }
+                },
+                required: ["ebook", "audiobook"]
+              }
             },
-            readDifferentlyInsight: { type: Type.STRING },
-            sectionJustification: { type: Type.STRING },
-            deepArchive: {
-              type: Type.OBJECT,
-              properties: { fullSynopsis: { type: Type.STRING }, authorBackground: { type: Type.STRING } },
-              required: ["fullSynopsis", "authorBackground"]
-            }
-          },
-          required: ["literaryIdentity", "whyFitsNow", "commitment", "emotionalArc", "readWhen", "avoidWhen", "microSynopsis", "atmosphericProfile", "readDifferentlyInsight", "sectionJustification", "deepArchive", "sensoryPairing"]
+            required: ["literaryIdentity", "whyFitsNow", "commitment", "emotionalArc", "readWhen", "avoidWhen", "microSynopsis", "atmosphericProfile", "readDifferentlyInsight", "sectionJustification", "deepArchive", "sensoryPairing", "memorableQuote", "keyThemes", "formats"]
+          }
         }
-      }
+      })
     });
-    const result = extractJson(response.text);
+
+    if (!res.ok) throw new Error("Enhanced details generation failed via secure proxy");
+    const response: GenerateContentResponse = await res.json();
+    const result = extractJson(response.candidates?.[0]?.content?.parts?.[0]?.text || "{}");
     aiCache.set(cacheKey, result);
     return result;
   } catch (error) {
+    console.error("Enhancement failed", error);
     throw error;
   }
 };

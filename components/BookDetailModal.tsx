@@ -186,10 +186,41 @@ export const BookDetailModal: React.FC<BookDetailModalProps> = ({ book, onClose,
                     <div className="p-8 rounded-2xl bg-white/[0.02] border border-white/5 relative overflow-hidden">
                       <div className="absolute top-0 left-0 w-1 h-full bg-accent-gold/50" />
                       <h3 className="text-[9px] uppercase tracking-widest text-slate-500 mb-4">Why This, Why Now</h3>
-                      <p className="font-serif text-lg leading-relaxed text-slate-200">
+                      <p className="font-serif text-lg leading-relaxed text-slate-200 mb-6">
                         "{enhanced.literaryIdentity}"
                       </p>
+
+                      {/* Formats & Themes */}
+                      <div className="flex flex-wrap gap-3 items-center border-t border-white/5 pt-4">
+                        {enhanced.formats?.ebook && (
+                          <span className="px-2 py-1 rounded bg-slate-800/50 text-[10px] uppercase font-bold text-slate-400 border border-white/5 flex items-center gap-1">
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+                            E-Book
+                          </span>
+                        )}
+                        {enhanced.formats?.audiobook && (
+                          <span className="px-2 py-1 rounded bg-slate-800/50 text-[10px] uppercase font-bold text-slate-400 border border-white/5 flex items-center gap-1">
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
+                            Audio
+                          </span>
+                        )}
+                        <div className="flex-1" />
+                        {enhanced.keyThemes?.map(theme => (
+                          <span key={theme} className="text-accent-gold/60 text-[10px] uppercase tracking-wider font-bold">#{theme}</span>
+                        ))}
+                      </div>
                     </div>
+
+                    {/* Memorable Quote */}
+                    {enhanced.memorableQuote && (
+                      <div className="relative py-8 text-center px-12">
+                        <span className="absolute top-0 left-0 text-6xl font-serif text-white/5">"</span>
+                        <p className="font-serif text-2xl italic text-slate-300 leading-relaxed">
+                          {enhanced.memorableQuote}
+                        </p>
+                        <span className="absolute bottom-0 right-0 text-6xl font-serif text-white/5">"</span>
+                      </div>
+                    )}
 
                     {/* Sensory Pairing Matrix */}
                     <div className="space-y-6">

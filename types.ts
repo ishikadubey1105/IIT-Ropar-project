@@ -16,13 +16,13 @@ export interface Book {
   language?: string;
   coverUrl?: string;
   sources?: WebSource[];
-  
+
   // Enhanced Metadata
-  atmosphericRole?: string; 
+  atmosphericRole?: string;
   cognitiveEffort?: 'Light' | 'Moderate' | 'Demanding';
   sectionFit?: string;
   momentFit?: string;
-  
+
   publisher?: string;
   publishedDate?: string;
   pageCount?: number;
@@ -94,10 +94,17 @@ export interface EnhancedDetails {
     authorBackground: string;
   };
   sensoryPairing: SensoryPairing;
+  memorableQuote: string;
+  keyThemes: string[];
+  formats: {
+    ebook: boolean;
+    audiobook: boolean;
+    graphicNovel?: boolean;
+  };
 }
 
 export interface ReadingProgress {
-  bookTitle: string; 
+  bookTitle: string;
   currentPage: number;
   totalPages: number;
   percentage: number;
