@@ -87,14 +87,11 @@ export const fetchEnhancedBookDetails = async (book: Book, prefs: UserPreference
   const systemInstruction = `You are Atmosphera. Generate accurate, sensory book metadata. Use Search to verify facts. Archive Date: ${SYSTEM_DATE}.`;
   // SENIOR UPGRADE: We explicitly demand "Functional Search URLs" if a direct link is missing.
   // This prevents "dead" links by ensuring the user always lands on a search result page at minimum.
-  // MONETIZATION LAYER: Amazon Affiliate Integration (Placeholder)
-  // We use a generic search URL now. In the future, replace 'atmosphera-20' with your real Amazon Associate ID.
-  const affiliateTag = 'atmosphera-20';
   const prompt = `Generate deep metadata for "${book.title}" by ${book.author}. Include a memorable quote, key themes. 
   CRITICAL FOR FORMATS:
-  1. 'ebookUrl': Generate an Amazon Kindle Search URL with affiliate tag: "https://www.amazon.com/s?k=${encodeURIComponent(book.title + ' ' + book.author + ' kindle')}&tag=${affiliateTag}".
-  2. 'audiobookUrl': Generate an Audible Search URL: "https://www.audible.com/search?keywords=${encodeURIComponent(book.title + ' ' + book.author)}".
-  Do NOT invent unknown direct links. Use these search templates to ensure user success and potential revenue.`;
+  1. 'ebookUrl': If a specific legit link (Project Gutenberg/Standard Ebooks) exists, use it. OTHERWISE, generate a high-quality Google Search URL: "https://www.google.com/search?q=${encodeURIComponent(book.title + ' ' + book.author)} +filetype:pdf+OR+epub".
+  2. 'audiobookUrl': Use a generic Audible search URL: "https://www.audible.com/search?keywords=${encodeURIComponent(book.title + ' ' + book.author)}".
+  Do NOT invent fake store links. Safe Search URLs are better than 404s.`;
 
   try {
     const res = await fetch('/api/generate', {
