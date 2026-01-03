@@ -21,6 +21,8 @@ import { useLibrary } from './hooks/useLibrary';
 import { UserPreferences, Book, SessionHistory } from './types';
 import { getWishlist, toggleWishlist, isInWishlist, getTrainingSignals } from './services/storage';
 import { getBookRecommendations, searchBooks } from './services/gemini';
+import { LoadingOverlay } from './components/LoadingOverlay';
+import { ErrorToast } from './components/ErrorToast';
 
 function App() {
   // Session State
@@ -144,28 +146,12 @@ function App() {
           onSettingsClick={() => setShowSettings(true)}
         />
 
-        {error && (
-          <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] animate-slide-up pointer-events-none">
-            <div className="bg-red-500/10 backdrop-blur-xl border border-red-500/50 px-6 py-3 rounded-full text-red-200 text-[10px] font-bold uppercase tracking-[0.2em] shadow-2xl flex items-center gap-4 pointer-events-auto">
-              <svg className="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-              {error}
-              <button onClick={() => setError(null)} className="ml-2 hover:text-white transition-colors p-1">
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
-              </button>
-            </div>
-          </div>
-        )}
+        {error && <ErrorToast message={error} onClose={() => setError(null)} />}
 
         <div className="relative z-10">
           {view === 'curate' ? (
             <div className="pt-32 min-h-screen flex items-center justify-center relative">
-              {loading && (
-                <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[#0a0a0c]/90 backdrop-blur-sm animate-fade-in">
-                  <div className="w-16 h-16 border-2 border-accent-gold border-t-transparent rounded-full animate-spin mb-6"></div>
-                  <h2 className="text-3xl font-serif text-white mb-2">Consulting the Archives</h2>
-                  <p className="text-slate-400 italic animate-pulse">Curating your personalized selection...</p>
-                </div>
-              )}
+              {loading && <LoadingOverlay />}
               <Questionnaire onComplete={handleCurateComplete} />
             </div>
           ) : view === 'recommendations' ? (
@@ -177,7 +163,7 @@ function App() {
                     <span className="text-[10px] uppercase font-bold tracking-[0.2em] text-accent-gold">Curated Archive Revealed</span>
                   </div>
                   <h1 className="text-4xl md:text-6xl font-serif font-bold mb-4">{recTitle}</h1>
-                  <p className="text-lg md:text-xl font-serif italic text-slate-400 max-w-4xl border-l-2 border-accent-gold pl-6 leading-relaxed">
+                  <p className="text-lg md:text-xl font-serif italic text-slate-300 max-w-4xl border-l-2 border-accent-gold pl-6 leading-relaxed">
                     "{recInsight}"
                   </p>
                 </div>
@@ -193,7 +179,7 @@ function App() {
                 <div className="mt-24 pt-12 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-8">
                   <div className="max-w-xl text-center md:text-left">
                     <h3 className="text-lg font-serif font-bold text-white mb-2">Refine your search?</h3>
-                    <p className="text-sm text-slate-500">You can adjust the vibe or return to the main library.</p>
+                    <p className="text-sm text-slate-400">You can adjust the vibe or return to the main library.</p>
                   </div>
                   <div className="flex gap-4">
                     <button onClick={() => setView('curate')} className="px-8 py-3 rounded border border-white/10 hover:border-accent-gold text-xs font-bold uppercase tracking-widest transition-all">Recalibrate</button>
@@ -207,7 +193,7 @@ function App() {
               <div className="max-w-7xl mx-auto">
                 <div className="mb-12">
                   <h1 className="text-3xl md:text-5xl font-serif font-bold mb-2">Discovery Search</h1>
-                  <p className="text-slate-500 font-serif italic">Results for "{searchInputValue}"</p>
+                  <p className="text-slate-400 font-serif italic">Results for "{searchInputValue}"</p>
                 </div>
 
                 {searchResults.length > 0 ? (
@@ -313,34 +299,44 @@ function App() {
           userPrefs={currentPrefs}
         />
 
-        {/* Floating Action Buttons */}
+        {/* Floating Action Buttons with Tooltips */}
         <div className="fixed bottom-8 right-8 z-[50] flex flex-col gap-4">
           {/* Visual Search Button */}
           {view !== 'curate' && view !== 'lab' && (
-            <button
-              onClick={() => setShowVisualSearch(true)}
-              className="bg-accent-gold text-black p-4 rounded-full shadow-[0_0_30px_rgba(212,175,55,0.3)] hover:scale-110 transition-transform hover:shadow-[0_0_50px_rgba(212,175,55,0.5)] group"
-              title="Visual Resonance"
-            >
-              <svg className="w-6 h-6 group-hover:rotate-90 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-            </button>
+            <div className="relative group">
+              <div className="absolute right-full mr-4 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-black/80 backdrop-blur border border-white/10 rounded-lg text-[10px] font-bold uppercase tracking-widest text-white opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                Visual Search
+              </div>
+              <button
+                onClick={() => setShowVisualSearch(true)}
+                className="bg-accent-gold text-black p-4 rounded-full shadow-[0_0_30px_rgba(212,175,55,0.3)] hover:scale-110 transition-transform hover:shadow-[0_0_50px_rgba(212,175,55,0.5)]"
+                aria-label="Open Visual Search"
+              >
+                <svg className="w-6 h-6 group-hover:rotate-90 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+              </button>
+            </div>
           )}
 
           {/* Neural Lab (Admin) */}
           {view !== 'curate' && view !== 'lab' && (
-            <button
-              onClick={() => setView('lab')}
-              className="bg-slate-900/80 border border-white/10 p-4 rounded-full text-slate-400 hover:text-accent-gold hover:border-accent-gold transition-all backdrop-blur-md shadow-2xl group"
-              title="Neural Lab"
-            >
-              <svg className="w-6 h-6 group-hover:rotate-180 transition-transform duration-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-            </button>
+            <div className="relative group">
+              <div className="absolute right-full mr-4 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-black/80 backdrop-blur border border-white/10 rounded-lg text-[10px] font-bold uppercase tracking-widest text-white opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                Neural Diagnostics
+              </div>
+              <button
+                onClick={() => setView('lab')}
+                className="bg-slate-900/80 border border-white/10 p-4 rounded-full text-slate-400 hover:text-accent-gold hover:border-accent-gold transition-all backdrop-blur-md shadow-2xl"
+                aria-label="Open Neural Lab"
+              >
+                <svg className="w-6 h-6 group-hover:rotate-180 transition-transform duration-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+              </button>
+            </div>
           )}
         </div>
 
         <LiveLibrarian />
       </div>
-    </AuthProvider>
+    </AuthProvider >
   );
 }
 
