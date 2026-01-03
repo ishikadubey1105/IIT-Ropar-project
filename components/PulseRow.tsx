@@ -31,12 +31,12 @@ export const PulseRow: React.FC<PulseRowProps> = ({ pulses }) => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {pulses.map((pulse, i) => (
-          <a 
-            key={i} 
-            href={pulse.url} 
-            target="_blank" 
+          <a
+            key={i}
+            href={pulse.url}
+            target="_blank"
             rel="noopener noreferrer"
-            className="group block p-6 bg-white/[0.03] border border-white/10 rounded-xl hover:border-accent-gold/50 transition-all duration-500 hover:-translate-y-1"
+            className="group block p-6 bg-black/40 border border-white/5 rounded-xl hover:border-accent-gold/50 transition-all duration-500 hover:-translate-y-1"
           >
             <div className={`inline-block px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest rounded border mb-4 ${getTypeStyles(pulse.type)}`}>
               {pulse.type}

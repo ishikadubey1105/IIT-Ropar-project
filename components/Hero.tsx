@@ -31,7 +31,7 @@ export const Hero: React.FC<HeroProps> = ({ onStart, onBrowse, featuredBook, fea
     if (books.length > 1) {
       const interval = setInterval(() => {
         nextSlide();
-      }, 5000); // Auto slide every 5s
+      }, 4000); // Auto slide every 4s
       return () => clearInterval(interval);
     }
   }, [currentIndex, books.length]);
@@ -39,11 +39,6 @@ export const Hero: React.FC<HeroProps> = ({ onStart, onBrowse, featuredBook, fea
   const nextSlide = () => {
     setCurrentIndex((prev) => (prev + 1) % books.length);
   };
-
-  const prevSlide = () => {
-    setCurrentIndex((prev) => (prev - 1 + books.length) % books.length);
-  };
-
 
   useEffect(() => {
     setIsVisible(true);
@@ -147,19 +142,7 @@ export const Hero: React.FC<HeroProps> = ({ onStart, onBrowse, featuredBook, fea
           </button>
         </div>
 
-        {/* Carousel Controls */}
-        {books.length > 1 && (
-          <div className="absolute right-0 bottom-32 md:right-12 z-30 flex gap-4">
-            <button onClick={prevSlide} className="p-3 rounded-full bg-white/5 border border-white/10 hover:bg-white/20 transition backdrop-blur-md text-white">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-            </button>
-            <button onClick={nextSlide} className="p-3 rounded-full bg-white/5 border border-white/10 hover:bg-white/20 transition backdrop-blur-md text-white">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-            </button>
-          </div>
-        )}
-
-        {/* Carousel Indicators */}
+        {/* Carousel Indicators - Kept minimalistic, removed arrows as requested */}
         {books.length > 1 && (
           <div className="flex gap-2 mt-12">
             {books.map((_, idx) => (
