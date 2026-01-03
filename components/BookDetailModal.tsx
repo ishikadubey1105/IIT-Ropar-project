@@ -119,19 +119,9 @@ export const BookDetailModal: React.FC<BookDetailModalProps> = ({ book, onClose,
             </div>
           </div>
 
-          {/* Direct Download Action */}
-          {/* Direct Download Action (Public Domain Only) */}
-          {book.pdfUrl && (
-            <a
-              href={book.pdfUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-4 w-full py-4 bg-accent-gold/10 hover:bg-accent-gold/20 border border-accent-gold/50 rounded-lg text-accent-gold uppercase font-bold text-xs tracking-widest flex items-center justify-center gap-2 transition-all hover:scale-[1.02] shadow-lg group"
-            >
-              <svg className="w-5 h-5 group-hover:animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-              Download PDF
-            </a>
-          )}
+
+          {/* Direct Download Action Removed */}
+
         </div>
 
         {/* Right: Narrative Intelligence */}
