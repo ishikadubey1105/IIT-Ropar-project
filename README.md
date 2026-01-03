@@ -5,6 +5,10 @@ Atmosphera is a context-aware, emotionally intelligent book recommendation syste
 
 The system aligns books with environmental and emotional context such as weather, time of day, mental energy, and reading intent to reduce decision fatigue and improve discovery quality.
 
+### 🚀 Live Demo
+Experience the application live at **[https://atmosphera-app.vercel.app/](https://atmosphera-app.vercel.app/)**. 
+This deployment showcases the full atmospheric intelligence engine, allowing you to explore context-aware book recommendations directly in your browser. No installation is required to experience the real-time weather integration and neural curation features.
+
 ---
 
 ## Problem Statement

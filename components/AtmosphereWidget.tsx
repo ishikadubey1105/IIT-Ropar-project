@@ -52,11 +52,26 @@ export const AtmosphereWidget: React.FC = () => {
 
     return (
         <div className="fixed top-24 right-6 z-50 animate-fade-in pointer-events-none">
-            <div className={`${containerClasses} rounded-full px-4 py-2 flex items-center gap-3 transition-colors duration-500`}>
+            <div className={`group ${containerClasses} rounded-full px-4 py-2 flex items-center gap-3 transition-colors duration-500 pointer-events-auto relative cursor-help`}>
                 <span className="text-xl filter drop-shadow-sm">{icon}</span>
                 <div className="flex flex-col">
                     <span className={`text-[10px] uppercase tracking-widest ${subtextClasses}`}>{location || "Local Atmosphere"}</span>
                     <span className={`text-xs font-serif italic ${mainTextClasses}`}>{label} {temperature ? `• ${temperature}°C` : ''}</span>
+                </div>
+
+                {/* Context Tooltip */}
+                <div className="absolute right-0 top-full mt-4 w-64 p-4 bg-black/90 backdrop-blur-xl border border-white/10 rounded-xl text-left opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 pointer-events-none shadow-2xl">
+                    <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-full bg-accent-gold/10 flex items-center justify-center shrink-0">
+                            <span className="text-accent-gold text-lg">💡</span>
+                        </div>
+                        <div>
+                            <p className="text-accent-gold text-[10px] font-bold uppercase tracking-widest mb-1">Why we sense this</p>
+                            <p className="text-slate-300 text-xs leading-relaxed">
+                                Atmosphera calibrates recommendations to your physical reality. A rainy afternoon suggests different reading material than a sunny morning.
+                            </p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
