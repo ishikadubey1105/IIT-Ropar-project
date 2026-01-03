@@ -108,7 +108,7 @@ function App() {
       trackAction('searchQueries', q);
       setView('search');
     } catch (e) {
-      setError("Search unavailable, please try again later.");
+      setError("Search momentarily unavailable. Please retry.");
     } finally {
       setLoading(false);
     }

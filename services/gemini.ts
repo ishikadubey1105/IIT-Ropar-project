@@ -177,7 +177,17 @@ export const searchBooks = async (query: string, language?: string, limit: numbe
   try {
     const langCode = language ? LANGUAGE_MAP[language] || '' : '';
     const langParam = langCode ? `&langRestrict=${langCode}` : '';
-    const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=${limit}&printType=books${langParam}`);
+
+    // Attempt 1: With Preference
+    let res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=${limit}&printType=books${langParam}`);
+
+    // Attempt 2: Fallback to Global if failed or empty
+    if (!res.ok || (await res.clone().json()).totalItems === 0) {
+      if (langParam) {
+        res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=${limit}&printType=books`);
+      }
+    }
+
     if (!res.ok) throw new Error(`API Error: ${res.status}`);
     const data = await res.json();
     return (data.items || []).map((item: any) => {
