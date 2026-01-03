@@ -498,20 +498,22 @@ export const getAtmosphericIntelligence = async (
 };
 
 export const getBookRecommendations = async (prefs: UserPreferences, trainingSignals: TrainingSignal[] = []): Promise<{ heading: string, insight: string, antiRecommendation: string, books: Book[], confidence: string }> => {
-  const systemInstruction = `You are Atmosphera, a deep-reasoning book recommendation engine. Archive Date: ${SYSTEM_DATE}. Recommend books strictly for the Age Group: ${prefs.age} and Language: ${prefs.language}. CRITICAL: Do NOT recommend children's/YA books if age is 18+.`;
-  const prompt = `Curate 5 books for Age: ${prefs.age}, Mood: ${prefs.mood}, Weather: ${prefs.weather}, Language: ${prefs.language}. Interest: ${prefs.specificInterest}. Ensure maturity level matches age ${prefs.age}.`;
+  // OPTIMIZED FOR SPEED: Removed complex constraints
+  const systemInstruction = `You are Atmosphera, a book recommendation engine. Recommend books strictly for Age: ${prefs.age} and Language: ${prefs.language}.`;
+
+  // Reduced fields in prompt to essential ones for speed
+  const prompt = `Curate 5 fiction books for Age: ${prefs.age}, Mood: ${prefs.mood}, Weather: ${prefs.weather}, Interest: ${prefs.specificInterest}. FAST JSON response. If public domain, provide 'pdfUrl' (Project Gutenberg etc).`;
 
   try {
-    // SECURE: Call Backend Proxy instead of exposing key
     const res = await fetch('/api/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: "gemini-2.0-flash", // Using flash for speed via proxy
+        model: "gemini-2.0-flash",
         contents: [{ parts: [{ text: prompt }] }],
         config: {
           systemInstruction: { parts: [{ text: systemInstruction }] },
-          tools: [{ googleSearch: {} }],
+          // Removed googleSearch tool for significantly faster response
           responseMimeType: "application/json",
           responseSchema: {
             type: Type.OBJECT,
@@ -523,8 +525,22 @@ export const getBookRecommendations = async (prefs: UserPreferences, trainingSig
               books: {
                 type: Type.ARRAY, items: {
                   type: Type.OBJECT,
-                  properties: { title: { type: Type.STRING }, author: { type: Type.STRING }, isbn: { type: Type.STRING }, genre: { type: Type.STRING }, description: { type: Type.STRING }, reasoning: { type: Type.STRING }, atmosphericRole: { type: Type.STRING }, cognitiveEffort: { type: Type.STRING, enum: ["Light", "Moderate", "Demanding"] }, moodColor: { type: Type.STRING }, excerpt: { type: Type.STRING }, language: { type: Type.STRING } },
-                  required: ["title", "author", "reasoning", "moodColor", "genre", "description", "excerpt", "atmosphericRole", "cognitiveEffort", "language"]
+                  properties: {
+                    title: { type: Type.STRING },
+                    author: { type: Type.STRING },
+                    // isbn: { type: Type.STRING }, // Removed for speed
+                    genre: { type: Type.STRING },
+                    description: { type: Type.STRING },
+                    reasoning: { type: Type.STRING },
+                    atmosphericRole: { type: Type.STRING },
+                    // cognitiveEffort: { type: Type.STRING, enum: ["Light", "Moderate", "Demanding"] }, // Removed
+                    moodColor: { type: Type.STRING },
+                    // excerpt: { type: Type.STRING }, // Removed lengthy generation
+                    language: { type: Type.STRING },
+                    pdfUrl: { type: Type.STRING },
+                    averageRating: { type: Type.NUMBER }
+                  },
+                  required: ["title", "author", "reasoning", "moodColor", "genre", "description", "atmosphericRole"]
                 }
               }
             },

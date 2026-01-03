@@ -11,6 +11,7 @@ import { PulseRow } from './components/PulseRow';
 import { NeuralLab } from './components/NeuralLab';
 import { GenresView } from './components/GenresView';
 import { AtmosphereWidget } from './components/AtmosphereWidget';
+import { WeatherEffects } from './components/WeatherEffects';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { AuthModal } from './components/AuthModal';
 import { SettingsModal } from './components/SettingsModal';
@@ -119,6 +120,7 @@ function App() {
   return (
     <AuthProvider>
       <div className="min-h-screen text-white font-sans overflow-x-hidden relative bg-transparent transition-colors duration-1000">
+        <WeatherEffects />
         <AtmosphereWidget />
         <AuthModal />
 
@@ -156,7 +158,14 @@ function App() {
 
         <div className="relative z-10">
           {view === 'curate' ? (
-            <div className="pt-32 min-h-screen flex items-center justify-center">
+            <div className="pt-32 min-h-screen flex items-center justify-center relative">
+              {loading && (
+                <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[#0a0a0c]/90 backdrop-blur-sm animate-fade-in">
+                  <div className="w-16 h-16 border-2 border-accent-gold border-t-transparent rounded-full animate-spin mb-6"></div>
+                  <h2 className="text-3xl font-serif text-white mb-2">Consulting the Archives</h2>
+                  <p className="text-slate-400 italic animate-pulse">Curating your personalized selection...</p>
+                </div>
+              )}
               <Questionnaire onComplete={handleCurateComplete} />
             </div>
           ) : view === 'recommendations' ? (
@@ -236,6 +245,7 @@ function App() {
             <>
               <Hero
                 featuredBook={featuredBook}
+                featuredBooks={[featuredBook, ...recommendations].filter((b): b is Book => !!b).slice(0, 5)}
                 onStart={() => setView('curate')}
                 onBrowse={() => setView('genres')}
                 onMoreInfo={(b) => { trackAction('viewed', b.title); setSelectedBook(b); }}

@@ -7,6 +7,7 @@ interface AtmosphereContextType {
     weather: WeatherType | null;
     isDay: boolean;
     temperature: number | null;
+    location: string | null;
     loading: boolean;
     refreshAtmosphere: () => Promise<void>;
 }
@@ -15,6 +16,7 @@ const AtmosphereContext = createContext<AtmosphereContextType>({
     weather: null,
     isDay: true,
     temperature: null,
+    location: null,
     loading: true,
     refreshAtmosphere: async () => { },
 });
@@ -25,6 +27,7 @@ export const AtmosphereProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const [weather, setWeather] = useState<WeatherType | null>(null);
     const [isDay, setIsDay] = useState(true);
     const [temperature, setTemperature] = useState<number | null>(null);
+    const [location, setLocation] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
     const refreshAtmosphere = async () => {
@@ -34,6 +37,7 @@ export const AtmosphereProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             setWeather(data.weather);
             setIsDay(data.isDay);
             setTemperature(data.temperature);
+            setLocation(data.locationName || "Local Atmosphere");
 
             // Update CSS Variables for global theming
             updateTheme(data.weather, data.isDay);
@@ -51,13 +55,13 @@ export const AtmosphereProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
     useEffect(() => {
         refreshAtmosphere();
-        // Poll every 30 minutes
-        const interval = setInterval(refreshAtmosphere, 30 * 60 * 1000);
+        // Poll every 5 minutes
+        const interval = setInterval(refreshAtmosphere, 5 * 60 * 1000);
         return () => clearInterval(interval);
     }, []);
 
     return (
-        <AtmosphereContext.Provider value={{ weather, isDay, temperature, loading, refreshAtmosphere }}>
+        <AtmosphereContext.Provider value={{ weather, isDay, temperature, location, loading, refreshAtmosphere }}>
             {children}
         </AtmosphereContext.Provider>
     );

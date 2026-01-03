@@ -15,6 +15,7 @@ export interface Book {
   foodPairing?: string;
   language?: string;
   coverUrl?: string;
+  pdfUrl?: string;
   sources?: WebSource[];
 
   // Enhanced Metadata
