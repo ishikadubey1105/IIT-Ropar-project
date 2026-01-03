@@ -123,7 +123,7 @@ export const Hero: React.FC<HeroProps> = ({ onStart, onBrowse, featuredBook, fea
         <div className="relative mb-12 max-w-2xl">
           <div className="bg-white/[0.03] backdrop-blur-xl border border-white/5 p-6 md:p-8 rounded-lg shadow-2xl">
             <p className="text-lg md:text-xl text-slate-200 leading-relaxed font-serif italic font-light line-clamp-3">
-              "{featuredBook.description}"
+              "{currentBook.description}"
             </p>
           </div>
         </div>

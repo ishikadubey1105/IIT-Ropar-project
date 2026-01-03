@@ -245,7 +245,7 @@ function App() {
             <>
               <Hero
                 featuredBook={featuredBook}
-                featuredBooks={[featuredBook, ...recommendations].filter((b): b is Book => !!b).slice(0, 5)}
+                featuredBooks={recommendations.length > 0 ? recommendations.slice(0, 5) : (shelves[0]?.books?.slice(0, 5) || [])}
                 onStart={() => setView('curate')}
                 onBrowse={() => setView('genres')}
                 onMoreInfo={(b) => { trackAction('viewed', b.title); setSelectedBook(b); }}

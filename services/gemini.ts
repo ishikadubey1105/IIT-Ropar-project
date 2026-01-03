@@ -502,7 +502,7 @@ export const getBookRecommendations = async (prefs: UserPreferences, trainingSig
   const systemInstruction = `You are Atmosphera, a book recommendation engine. Recommend books strictly for Age: ${prefs.age} and Language: ${prefs.language}.`;
 
   // Reduced fields in prompt to essential ones for speed
-  const prompt = `Curate 5 fiction books for Age: ${prefs.age}, Mood: ${prefs.mood}, Weather: ${prefs.weather}, Interest: ${prefs.specificInterest}. FAST JSON response. If public domain, provide 'pdfUrl' (Project Gutenberg etc).`;
+  const prompt = `Curate 5 fiction books for Age: ${prefs.age}, Mood: ${prefs.mood}, Weather: ${prefs.weather}, Interest: ${prefs.specificInterest}. FAST JSON response. If public domain, provide 'pdfUrl' (Project Gutenberg etc). IMPORTANT: Provide valid 'isbn' for cover art retrieval.`;
 
   try {
     const res = await fetch('/api/generate', {
@@ -528,7 +528,8 @@ export const getBookRecommendations = async (prefs: UserPreferences, trainingSig
                   properties: {
                     title: { type: Type.STRING },
                     author: { type: Type.STRING },
-                    // isbn: { type: Type.STRING }, // Removed for speed
+                    isbn: { type: Type.STRING },
+                    coverUrl: { type: Type.STRING },
                     genre: { type: Type.STRING },
                     description: { type: Type.STRING },
                     reasoning: { type: Type.STRING },
