@@ -6,19 +6,7 @@ import { WeatherType } from '../types';
 export const AtmosphereWidget: React.FC = () => {
     const { weather, isDay, temperature, location, loading } = useAtmosphere();
 
-    if (loading) return null;
-
-    const weatherIcons: Record<string, string> = {
-        [WeatherType.SUNNY]: "☀️",
-        [WeatherType.NIGHT]: "🌙",
-        [WeatherType.RAINY]: "🌧️",
-        [WeatherType.STORMY]: "⛈️",
-        [WeatherType.CLOUDY]: "☁️",
-        [WeatherType.SNOWY]: "❄️",
-        [WeatherType.FOGGY]: "🌫️",
-        [WeatherType.WINDY]: "💨",
-    };
-
+    // CRITICAL: All hooks MUST be called before any conditional returns
     const [isOnline, setIsOnline] = React.useState(navigator.onLine);
 
     React.useEffect(() => {
@@ -31,6 +19,19 @@ export const AtmosphereWidget: React.FC = () => {
             window.removeEventListener('offline', handleOffline);
         };
     }, []);
+
+    if (loading) return null;
+
+    const weatherIcons: Record<string, string> = {
+        [WeatherType.SUNNY]: "☀️",
+        [WeatherType.NIGHT]: "🌙",
+        [WeatherType.RAINY]: "🌧️",
+        [WeatherType.STORMY]: "⛈️",
+        [WeatherType.CLOUDY]: "☁️",
+        [WeatherType.SNOWY]: "❄️",
+        [WeatherType.FOGGY]: "🌫️",
+        [WeatherType.WINDY]: "💨",
+    };
 
     const icon = !isOnline ? "📡" : (weather ? weatherIcons[weather] || "✨" : "✨");
     const label = !isOnline ? "Offline Mode (Cached)" : (weather || "Calibrating...");

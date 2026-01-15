@@ -7,7 +7,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
   return {
     server: {
-      port: 4173, // Changed default port to avoid conflict with backend 3000
+      port: 5173, // Vite default dev port
       host: '0.0.0.0',
       proxy: {
         '/api': {

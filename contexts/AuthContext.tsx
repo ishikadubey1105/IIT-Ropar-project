@@ -59,6 +59,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     const guestLogin = () => {
+        setLoading(true);
+
         const guest: User = {
             id: 'guest-' + Date.now(),
             name: 'Guest Reader',
@@ -66,8 +68,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             avatar: 'https://api.dicebear.com/9.x/micah/svg?seed=Guest', // Placeholder
             isGuest: true
         };
-        setUser(guest);
+
+        // IMPORTANT: Set session storage BEFORE redirecting
+        sessionStorage.setItem('guest_session', JSON.stringify({
+            id: guest.id,
+            timestamp: new Date(),
+            isGuest: true
+        }));
+
         localStorage.setItem('atmosphera_user', JSON.stringify(guest));
+
+        // Redirect immediately to home
+        setTimeout(() => {
+            setUser(guest);
+            setLoading(false);
+        }, 300);
     }
 
     const logout = () => {

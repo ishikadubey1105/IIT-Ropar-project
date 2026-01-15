@@ -15,6 +15,7 @@ interface NavbarProps {
   // Added 'recommendations' to support the focused recommendation view state from App.tsx
   activeView: 'home' | 'curate' | 'search' | 'genres' | 'recommendations';
   onSettingsClick?: () => void;
+  onSearchClear?: () => void;
   className?: string;
 }
 
@@ -30,6 +31,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onSearchChange,
   activeView,
   onSettingsClick,
+  onSearchClear,
   className = ''
 }) => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -126,8 +128,23 @@ export const Navbar: React.FC<NavbarProps> = ({
             placeholder="Search books..."
             value={searchValue}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="bg-black/40 border border-slate-600 rounded-full px-5 py-2.5 w-32 md:w-48 focus:w-64 transition-all duration-300 text-sm text-white focus:outline-none focus:border-accent-gold shadow-inner placeholder-slate-500"
+            className="bg-black/40 border border-slate-600 rounded-full px-5 py-2.5 w-32 md:w-48 focus:w-64 transition-all duration-300 text-sm text-white focus:outline-none focus:border-accent-gold shadow-inner placeholder-slate-500 pr-16"
           />
+
+          {searchValue && (
+            <button
+              type="button"
+              onClick={() => {
+                onSearchChange('');
+                onSearchClear?.();
+                inputRef.current?.focus();
+              }}
+              className="absolute right-10 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-500 hover:text-white uppercase transition-colors"
+            >
+              Clear
+            </button>
+          )}
+
           <button type="submit" className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
           </button>

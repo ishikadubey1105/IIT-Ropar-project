@@ -144,6 +144,11 @@ function App() {
           searchValue={searchInputValue}
           onSearchChange={setSearchInputValue}
           onSettingsClick={() => setShowSettings(true)}
+          onSearchClear={() => {
+            setSearchInputValue('');
+            setSearchResults([]);
+            setView('home');
+          }}
         />
 
         {error && <ErrorToast message={error} onClose={() => setError(null)} />}
@@ -206,7 +211,8 @@ function App() {
                   </div>
                 ) : !loading && (
                   <div className="py-20 text-center border border-white/5 bg-white/[0.02] rounded-2xl">
-                    <p className="text-slate-400 font-serif italic text-lg">No matches found in the current archive context.</p>
+                    <p className="text-slate-400 font-serif italic text-lg">📚 No books found for "{searchInputValue}"</p>
+                    <p className="text-slate-500 text-sm mt-2">Try searching for genres like "Fiction" or "Mystery"</p>
                     <button onClick={() => setView('home')} className="mt-6 text-accent-gold uppercase text-[10px] tracking-widest font-bold">Return to Atrium</button>
                   </div>
                 )}

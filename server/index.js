@@ -42,6 +42,7 @@ app.post('/api/generate', async (req, res) => {
             config
         });
 
+        res.json({ result: result.response });
     } catch (error) {
         console.error("AI Generation Error:", error.message);
         res.status(500).json({ error: error.message || "Internal Server Error" });
