@@ -228,12 +228,16 @@ export const BookDetailModal: React.FC<BookDetailModalProps> = ({ book, onClose,
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
                           </a>
                         )}
-                        {enhanced.formats?.audiobookUrl && (
-                          <a href={enhanced.formats.audiobookUrl} target="_blank" rel="noopener noreferrer" className="px-4 py-3 rounded bg-slate-800/30 hover:bg-slate-700/50 border border-white/5 hover:border-accent-gold/30 flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-400 hover:text-white transition-all">
-                            Listen Audio
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
-                          </a>
-                        )}
+                        {/* FALLBACK: Always show audiobook link with dynamic URL */}
+                        <a
+                          href={enhanced.formats?.audiobookUrl || `https://www.audible.com/search?keywords=${encodeURIComponent(book.title + ' ' + book.author)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-4 py-3 rounded bg-slate-800/30 hover:bg-slate-700/50 border border-white/5 hover:border-accent-gold/30 flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-400 hover:text-white transition-all"
+                        >
+                          Listen Audio
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                        </a>
                       </div>
 
                     </div>
