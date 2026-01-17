@@ -523,8 +523,13 @@ export const getBookRecommendations = async (prefs: UserPreferences, trainingSig
   // OPTIMIZED FOR SPEED: Removed complex constraints
   const systemInstruction = `You are Atmosphera, a book recommendation engine. Recommend books strictly for Age: ${prefs.age} and Language: ${prefs.language}.`;
 
+  // Format Training Signals (Neural Context)
+  const neuralContext = trainingSignals.length > 0
+    ? `USER HISTORY & FEEDBACK: ${trainingSignals.map(s => `${s.feedbackType === 'positive' ? 'LOVED' : 'DISLIKED'} '${s.bookTitle}' (${s.contextNote})`).join('; ')}. ADAPT RECOMMENDATIONS BASED ON THIS.`
+    : '';
+
   // Reduced fields in prompt to essential ones for speed
-  const prompt = `Curate 5 fiction books for Age: ${prefs.age}, Mood: ${prefs.mood}, Weather: ${prefs.weather}, Interest: ${prefs.specificInterest}. FAST JSON response. If public domain, provide 'pdfUrl' (Project Gutenberg etc). IMPORTANT: Provide valid 'isbn' for cover art retrieval.`;
+  const prompt = `Curate 5 fiction books for Age: ${prefs.age}, Mood: ${prefs.mood}, Weather: ${prefs.weather}, Interest: ${prefs.specificInterest}. \n${neuralContext}\nFAST JSON response. If public domain, provide 'pdfUrl' (Project Gutenberg etc). IMPORTANT: Provide valid 'isbn' for cover art retrieval.`;
 
   try {
     const res = await fetch('/api/generate', {
